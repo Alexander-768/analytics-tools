@@ -1,6 +1,7 @@
-import { ChevronDown, LockKeyhole } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { examples } from '../data/examples';
+import type { ExampleId } from '../types';
 
-export function ExampleSelector() {
-  return <div className="example-strip"><span className="example-label">Examples</span>{examples.map((e, i) => <button key={e.name} disabled={!e.available} className={i === 0 ? 'active-example' : ''}><span>{e.name}<small>{e.detail}</small></span>{e.available ? i === 0 && <ChevronDown size={14}/> : <LockKeyhole size={12}/>}</button>)}</div>;
+export function ExampleSelector({ selected, onSelect }: { selected: ExampleId; onSelect(id: ExampleId): void }) {
+  return <div className="example-strip">{['Window examples', 'Ranking functions', 'Offset functions'].map(group => <div className="example-group" key={group}><span className="example-label">{group}</span>{examples.filter(e => e.group === group).map(e => <button key={e.name} onClick={() => onSelect(e.id as ExampleId)} className={e.id === selected ? 'active-example' : ''}><span>{e.name}<small>{e.detail}</small></span>{e.id === selected && <ChevronDown size={14}/>}</button>)}</div>)}</div>;
 }
