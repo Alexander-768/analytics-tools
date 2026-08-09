@@ -1,0 +1,4 @@
+import { motion } from 'framer-motion';
+import type { JoinPhase } from './model';
+import type { WorkingJoinKind } from './model';
+export function JoinQueryPanel({phase,kind}:{phase:JoinPhase;kind:WorkingJoinKind}){const active=phase!=='initial';const label=kind==='inner'?'INNER JOIN':'LEFT JOIN';return <section className="panel"><div className="panel-head"><div><span className="eyebrow">SQL query</span><h2>users_orders.sql</h2></div><span className="status-dot">{label}</span></div><div className="join-code"><b>SELECT</b><br/>　u.user_id,<br/>　u.name,<br/>　o.order_id,<br/>　o.amount<br/><b>FROM</b> users u<br/><strong>{label}</strong> orders o<br/><motion.span className={active?'on-active':''} animate={{backgroundColor:active?'rgba(124,129,255,.14)':'rgba(0,0,0,0)'}}>　<b>ON</b> u.user_id = o.user_id;</motion.span></div><div className="join-query-note"><span>Join predicate</span><code>users.user_id = orders.user_id</code></div></section>}
