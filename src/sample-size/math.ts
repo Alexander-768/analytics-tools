@@ -20,3 +20,6 @@ export function calculateSampleSize(input:SampleSizeInputs){
   const perGroup=Math.ceil(raw);return {zAlpha,zBeta,beta:100-input.power,perGroup,total:perGroup*2,se:Math.sqrt(2*input.variance/perGroup)};
 }
 export function validInputs(v:SampleSizeInputs){return v.variance>0&&v.mde>0&&v.alpha>0&&v.alpha<100&&v.power>0&&v.power<100}
+export type BinaryInputs={baseline:number;absoluteMde:number;alpha:number;power:number;alternative:Alternative};
+export function validBinary(v:BinaryInputs){return v.baseline>0&&v.baseline<100&&v.absoluteMde>0&&v.baseline+v.absoluteMde<100&&v.alpha>0&&v.alpha<100&&v.power>0&&v.power<100}
+export function calculateBinary(v:BinaryInputs){const p1=v.baseline/100,delta=v.absoluteMde/100,p2=p1+delta,alpha=v.alpha/100,zAlpha=normalQuantile(1-(v.alternative==='TWO_SIDED'?alpha/2:alpha)),zBeta=normalQuantile(v.power/100),sd0=Math.sqrt(2*p1*(1-p1)),sd1=Math.sqrt(p1*(1-p1)+p2*(1-p2)),perGroup=Math.ceil((zAlpha*sd0+zBeta*sd1)**2/delta**2);return{p1,p2,delta,sd0,sd1,zAlpha,zBeta,beta:100-v.power,perGroup,total:2*perGroup,se0:sd0/Math.sqrt(perGroup),se1:sd1/Math.sqrt(perGroup)}}
