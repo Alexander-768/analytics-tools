@@ -10,10 +10,10 @@ const path=(pts:Pt[],xmin:number,xmax:number,ymin:number,ymax:number)=>{
   return pts.map((p,i)=>`${i?'L':'M'} ${sx(p.x).toFixed(2)} ${sy(p.y).toFixed(2)}`).join(' ');
 };
 
-function Plot({curves,xmin,xmax,ymin,ymax,markers=[],line}:{
+function Plot({curves,xmin,xmax,ymin,ymax,markers=[],line,lines=[]}:{
   curves:{pts:Pt[];kind?:string}[];xmin:number;xmax:number;ymin:number;ymax:number;
   markers?:{x:number;y:number;label?:string;kind?:string}[];
-  line?:{x1:number;y1:number;x2:number;y2:number;kind?:string};
+  line?:{x1:number;y1:number;x2:number;y2:number;kind?:string}; lines?:{x1:number;y1:number;x2:number;y2:number;kind?:string}[];
 }){
   const sx=(x:number)=>P+(x-xmin)/(xmax-xmin)*(W-P*2);
   const sy=(y:number)=>H-P-(y-ymin)/(ymax-ymin)*(H-P*2);
@@ -21,7 +21,7 @@ function Plot({curves,xmin,xmax,ymin,ymax,markers=[],line}:{
     <line x1={P} x2={W-P} y1={sy(0)} y2={sy(0)} className="deriv-axis"/>
     <line x1={sx(0)} x2={sx(0)} y1={P} y2={H-P} className="deriv-axis"/>
     {curves.map((c,i)=><path key={i} d={path(c.pts,xmin,xmax,ymin,ymax)} className={`deriv-curve ${c.kind||'primary'}`}/>)}
-    {line&&<line x1={sx(line.x1)} y1={sy(line.y1)} x2={sx(line.x2)} y2={sy(line.y2)} className={`deriv-tangent ${line.kind||''}`}/>}
+    {line&&<line x1={sx(line.x1)} y1={sy(line.y1)} x2={sx(line.x2)} y2={sy(line.y2)} className={`deriv-tangent ${line.kind||''}`}/>} {lines.map((l,i)=><line key={`l-${i}`} x1={sx(l.x1)} y1={sy(l.y1)} x2={sx(l.x2)} y2={sy(l.y2)} className={`deriv-tangent ${l.kind||''}`}/>)}
     {markers.map((m,i)=><g key={i}><circle cx={sx(m.x)} cy={sy(m.y)} r="4.8" className={`deriv-marker ${m.kind||'primary'}`}/>{m.label&&<text x={sx(m.x)+7} y={sy(m.y)-7}>{m.label}</text>}</g>)}
   </svg>;
 }
@@ -72,7 +72,7 @@ export function DerivativesPage(){
         <button className="deriv-action" onClick={()=>setH(.05)}>{t('Make h very small')}</button>
         <p className="limit-note">{t('As h approaches 0, the secant slope approaches the tangent slope.')}</p>
       </div>
-      <div className="deriv-viz"><Plot curves={[{pts:square}]} xmin={-2.5} xmax={2.5} ymin={-1} ymax={6.5} line={secLine} markers={[{x:x0,y:f0,label:'x₀'},{x:x0+h,y:f1,label:'x₀+h',kind:'accent'}]}/><Plot curves={[]} xmin={-2.5} xmax={2.5} ymin={-1} ymax={6.5} line={tangentLine}/></div>
+      <div className="deriv-viz"><Plot curves={[{pts:square}]} xmin={-2.5} xmax={2.5} ymin={-1} ymax={6.5} lines={[{...secLine,kind:'secant'},{...tangentLine,kind:'tangent'}]} markers={[{x:x0,y:f0,label:'x₀'},{x:x0+h,y:f1,label:'x₀+h',kind:'accent'}]}/></div>
     </section>
 
     <section className="deriv-lab panel">
