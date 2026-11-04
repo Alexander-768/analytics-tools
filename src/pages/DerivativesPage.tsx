@@ -37,6 +37,7 @@ export function DerivativesPage(){
   const [h,setH]=useState(1);
   const [slopeX,setSlopeX]=useState(-1.4);
   const [comboX,setComboX]=useState(-1.4);
+  const [maxX,setMaxX]=useState(-1.4);
 
   const square=useMemo(()=>sample(x=>x*x,-2.5,2.5),[]);
   const cubic=useMemo(()=>sample(x=>x*x*x-3*x,-2.4,2.4),[]);
@@ -51,6 +52,9 @@ export function DerivativesPage(){
   const fpp=(x:number)=>6*x;
   const v1=fp(comboX),v2=fpp(comboX);
   const state=v1>=0?(v2>=0?'grow-fast':'grow-slow'):(v2>=0?'fall-slow':'fall-fast');
+  const maxF=(x:number)=>-x*x;
+  const maxFp=(x:number)=>-2*x;
+  const maxFpp=-2;
   const stateLabel:Record<string,string>={
     'grow-slow':t('Growing, but slowing down'),
     'grow-fast':t('Growing and accelerating'),
@@ -108,6 +112,37 @@ export function DerivativesPage(){
       <section className="deriv-examples panel">
         <div><b>f′(x)=5, f″(x)=−2</b><p>{t('The function is increasing, but its slope is getting smaller — so the growth is slowing down.')}</p></div>
         <div><b>f′(x)=−5, f″(x)=+2</b><p>{t('The function is decreasing, but the slope becomes less negative — so the decline is slowing down.')}</p></div>
+      </section>
+    </section>
+
+    <section className="deriv-maximum">
+      <div className="deriv-combo-head"><span className="limit-index">04</span><h2>{t('Why does f′(x₀)=0 and f″(x₀)<0 mean a local maximum?')}</h2><p>{t('A negative second derivative alone does not mean the original function is decreasing. It means the first derivative is decreasing.')}</p></div>
+
+      <section className="maximum-logic panel">
+        <div className="maximum-condition"><span>f′(x₀)=0</span><span>f″(x₀)&lt;0</span></div>
+        <p>{t('At x₀ the slope is zero. Because the slope is decreasing, it passes through zero from positive to negative.')}</p>
+        <div className="sign-flow">
+          <div><b>f′ &gt; 0</b><span>{t('increasing')}</span></div>
+          <i>→</i>
+          <div className="peak"><b>f′ = 0</b><span>{t('top')}</span></div>
+          <i>→</i>
+          <div><b>f′ &lt; 0</b><span>{t('decreasing')}</span></div>
+        </div>
+        <strong>{t('So the function rises before x₀ and falls after x₀ — that is exactly a local maximum.')}</strong>
+      </section>
+
+      <input className="combo-slider" type="range" min="-2" max="2" step=".02" value={maxX} onChange={e=>setMaxX(+e.target.value)}/>
+      <div className="deriv-current panel maximum-current"><span>x <b>{maxX.toFixed(2)}</b></span><span>f(x) <b>{maxF(maxX).toFixed(2)}</b></span><span>f′(x) <b>{maxFp(maxX).toFixed(2)}</b></span><span>f″(x) <b>{maxFpp.toFixed(2)}</b></span><strong>{maxX<0?t('Before x₀: the function is increasing'):maxX>0?t('After x₀: the function is decreasing'):t('At x₀: horizontal tangent, local maximum')}</strong></div>
+
+      <div className="deriv-double">
+        <section className="deriv-mini panel"><div className="deriv-mini-head"><div><span>f(x)</span><code>−x²</code></div><b>{maxF(maxX).toFixed(2)}</b></div><Plot curves={[{pts:sample(maxF,-2.2,2.2)}]} xmin={-2.2} xmax={2.2} ymin={-5} ymax={1} markers={[{x:maxX,y:maxF(maxX),label:`x=${maxX.toFixed(2)}`},{x:0,y:0,label:'x₀',kind:'accent'}]}/></section>
+        <section className="deriv-mini panel"><div className="deriv-mini-head"><div><span>f′(x)</span><code>−2x</code></div><b>{maxFp(maxX).toFixed(2)}</b></div><Plot curves={[{pts:sample(maxFp,-2.2,2.2)}]} xmin={-2.2} xmax={2.2} ymin={-5} ymax={5} markers={[{x:maxX,y:maxFp(maxX),label:`f′=${maxFp(maxX).toFixed(2)}`},{x:0,y:0,label:'f′=0',kind:'accent'}]}/></section>
+      </div>
+
+      <section className="maximum-note panel">
+        <b>{t('Key idea')}</b>
+        <p>{t('f″(x₀)<0 does not directly say “the function decreases”. It says the slope f′ is decreasing near x₀. If that decreasing slope is exactly 0 at x₀, then just before x₀ it is positive and just after x₀ it is negative.')}</p>
+        <code>f′&gt;0 → f′=0 → f′&lt;0</code>
       </section>
     </section>
   </main>;
