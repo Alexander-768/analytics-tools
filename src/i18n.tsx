@@ -180,7 +180,15 @@ const ru: Record<string,string> = {
   'Open calculator':'Открыть калькулятор',
   'Optional':'Опционально',
   'Auto':'Авто',
-  'Must be greater than 0':'Должно быть больше 0'
+  'Must be greater than 0':'Должно быть больше 0',
+  'Shaded blue: type I error (α)':'Синим: ошибка I рода (α)',
+  'Shaded amber: type II error (β)':'Янтарным: ошибка II рода (β)',
+  'H₀ variance uses baseline vs baseline':'Дисперсия H₀: baseline против baseline',
+  'H₁ variance uses baseline vs target':'Дисперсия H₁: baseline против target',
+  'H₀ · no effect':'H₀ · эффекта нет',
+  'H₁ · MDE':'H₁ · MDE',
+  'H₀ · baseline vs baseline':'H₀ · baseline vs baseline',
+  'H₁ · baseline vs target':'H₁ · baseline vs target'
 };
 
 const exact = (s:string) => ru[s] ?? s;
