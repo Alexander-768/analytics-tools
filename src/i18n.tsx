@@ -204,6 +204,8 @@ const ru: Record<string,string> = {
   'The function is decreasing':'Функция убывает',
   'The tangent is horizontal':'Касательная горизонтальна',
   'How to read the first and second derivatives together':'Как вместе читать первую и вторую производные',
+  'Core intuition':'Главная идея',
+  'This is the central idea: the first derivative tells you the direction, the second tells you how the slope is changing.':'Это центральная идея: первая производная говорит направление движения функции, вторая — как меняется её наклон.',
   'The first derivative tells you where the function is going. The second derivative tells you how the slope itself is changing.':'Первая производная говорит, куда сейчас идёт функция. Вторая — как меняется сам наклон.',
   'Growing, but slowing down':'Растёт, но замедляется',
   'Growing and accelerating':'Растёт и ускоряется',
