@@ -4,6 +4,9 @@ export type Language = 'en' | 'ru';
 
 const ru: Record<string,string> = {
   'Analytics toolkit':'Аналитический тулкит',
+  'Basic Math':'Базовая математика',
+  'A/B Testing':'A/B Testing',
+  'SQL':'SQL',
   'Interactive mode':'Интерактивный режим',
   'Analytics Toolkit':'Analytics Toolkit',
   'Category directory':'Каталог разделов',
