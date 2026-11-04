@@ -52,9 +52,10 @@ export function DerivativesPage(){
   const fpp=(x:number)=>6*x;
   const v1=fp(comboX),v2=fpp(comboX);
   const state=v1>=0?(v2>=0?'grow-fast':'grow-slow'):(v2>=0?'fall-slow':'fall-fast');
-  const maxF=(x:number)=>-x*x;
-  const maxFp=(x:number)=>-2*x;
-  const maxFpp=-2;
+  const maxX0=-1;
+  const maxF=f;
+  const maxFp=fp;
+  const maxFpp=fpp;
   const stateLabel:Record<string,string>={
     'grow-slow':t('Growing, but slowing down'),
     'grow-fast':t('Growing and accelerating'),
@@ -136,12 +137,13 @@ export function DerivativesPage(){
         <strong>{t('So the function rises before x₀ and falls after x₀ — that is exactly a local maximum.')}</strong>
       </section>
 
-      <input className="combo-slider" type="range" min="-2" max="2" step=".02" value={maxX} onChange={e=>setMaxX(+e.target.value)}/>
-      <div className="deriv-current panel maximum-current"><span>x <b>{maxX.toFixed(2)}</b></span><span>f(x) <b>{maxF(maxX).toFixed(2)}</b></span><span>f′(x) <b>{maxFp(maxX).toFixed(2)}</b></span><span>f″(x) <b>{maxFpp.toFixed(2)}</b></span><strong>{maxX<0?t('Before x₀: the function is increasing'):maxX>0?t('After x₀: the function is decreasing'):t('At x₀: horizontal tangent, local maximum')}</strong></div>
+      <input className="combo-slider" type="range" min="-1.8" max="-0.2" step=".02" value={maxX} onChange={e=>setMaxX(+e.target.value)}/>
+      <div className="deriv-current panel maximum-current"><span>x <b>{maxX.toFixed(2)}</b></span><span>f(x) <b>{maxF(maxX).toFixed(2)}</b></span><span>f′(x) <b>{maxFp(maxX).toFixed(2)}</b></span><span>f″(x) <b>{maxFpp(maxX).toFixed(2)}</b></span><strong>{maxX<maxX0-.02?t('Before x₀: the function is increasing'):maxX>maxX0+.02?t('After x₀: the function is decreasing'):t('At x₀: horizontal tangent, local maximum')}</strong></div>
 
-      <div className="deriv-double">
-        <section className="deriv-mini panel"><div className="deriv-mini-head"><div><span>f(x)</span><code>−x²</code></div><b>{maxF(maxX).toFixed(2)}</b></div><Plot curves={[{pts:sample(maxF,-2.2,2.2)}]} xmin={-2.2} xmax={2.2} ymin={-5} ymax={1} markers={[{x:maxX,y:maxF(maxX),label:`x=${maxX.toFixed(2)}`},{x:0,y:0,label:'x₀',kind:'accent'}]}/></section>
-        <section className="deriv-mini panel"><div className="deriv-mini-head"><div><span>f′(x)</span><code>−2x</code></div><b>{maxFp(maxX).toFixed(2)}</b></div><Plot curves={[{pts:sample(maxFp,-2.2,2.2)}]} xmin={-2.2} xmax={2.2} ymin={-5} ymax={5} markers={[{x:maxX,y:maxFp(maxX),label:`f′=${maxFp(maxX).toFixed(2)}`},{x:0,y:0,label:'f′=0',kind:'accent'}]}/></section>
+      <div className="deriv-triple maximum-triple">
+        <section className="deriv-mini panel"><div className="deriv-mini-head"><div><span>f(x)</span><code>x³ − 3x</code></div><b>{maxF(maxX).toFixed(2)}</b></div><Plot curves={[{pts:sample(maxF,-2.4,2.4)}]} xmin={-2.4} xmax={2.4} ymin={-5} ymax={5} markers={[{x:maxX,y:maxF(maxX),label:`x=${maxX.toFixed(2)}`},{x:maxX0,y:maxF(maxX0),label:'x₀ = −1',kind:'accent'}]}/></section>
+        <section className="deriv-mini panel"><div className="deriv-mini-head"><div><span>f′(x)</span><code>3x² − 3</code></div><b>{maxFp(maxX).toFixed(2)}</b></div><Plot curves={[{pts:sample(maxFp,-2.4,2.4)}]} xmin={-2.4} xmax={2.4} ymin={-4} ymax={14} markers={[{x:maxX,y:maxFp(maxX),label:`f′=${maxFp(maxX).toFixed(2)}`},{x:maxX0,y:0,label:'f′(−1)=0',kind:'accent'}]}/></section>
+        <section className="deriv-mini panel"><div className="deriv-mini-head"><div><span>f″(x)</span><code>6x</code></div><b>{maxFpp(maxX).toFixed(2)}</b></div><Plot curves={[{pts:sample(maxFpp,-2.4,2.4)}]} xmin={-2.4} xmax={2.4} ymin={-15} ymax={15} markers={[{x:maxX,y:maxFpp(maxX),label:`f″=${maxFpp(maxX).toFixed(2)}`},{x:maxX0,y:maxFpp(maxX0),label:'f″(−1)=−6',kind:'accent'}]}/></section>
       </div>
 
       <section className="maximum-note panel">
