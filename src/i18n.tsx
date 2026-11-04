@@ -214,7 +214,19 @@ const ru: Record<string,string> = {
   'Slope is negative and becoming more negative.':'Наклон отрицательный и становится ещё более отрицательным.',
   'Slope is negative, but becoming less negative.':'Наклон отрицательный, но становится менее отрицательным.',
   'The function is increasing, but its slope is getting smaller — so the growth is slowing down.':'Функция сейчас растёт, но её наклон уменьшается — значит, рост замедляется.',
-  'The function is decreasing, but the slope becomes less negative — so the decline is slowing down.':'Функция сейчас убывает, но наклон становится менее отрицательным — значит, падение замедляется.'
+  'The function is decreasing, but the slope becomes less negative — so the decline is slowing down.':'Функция сейчас убывает, но наклон становится менее отрицательным — значит, падение замедляется.',
+  'Why does f′(x₀)=0 and f″(x₀)<0 mean a local maximum?':'Почему f′(x₀)=0 и f″(x₀)<0 означает локальный максимум?',
+  'A negative second derivative alone does not mean the original function is decreasing. It means the first derivative is decreasing.':'Отрицательная вторая производная сама по себе не означает, что исходная функция убывает. Она означает, что уменьшается первая производная.',
+  'At x₀ the slope is zero. Because the slope is decreasing, it passes through zero from positive to negative.':'В точке x₀ наклон равен нулю. Поскольку наклон уменьшается, он проходит через ноль от положительных значений к отрицательным.',
+  'increasing':'рост',
+  'top':'вершина',
+  'decreasing':'убывание',
+  'So the function rises before x₀ and falls after x₀ — that is exactly a local maximum.':'Значит, до x₀ функция растёт, а после x₀ убывает — это и есть локальный максимум.',
+  'Before x₀: the function is increasing':'До x₀: функция растёт',
+  'After x₀: the function is decreasing':'После x₀: функция убывает',
+  'At x₀: horizontal tangent, local maximum':'В x₀: горизонтальная касательная, локальный максимум',
+  'Key idea':'Главная мысль',
+  'f″(x₀)<0 does not directly say “the function decreases”. It says the slope f′ is decreasing near x₀. If that decreasing slope is exactly 0 at x₀, then just before x₀ it is positive and just after x₀ it is negative.':'f″(x₀)<0 не говорит напрямую «функция убывает». Это значит, что наклон f′ уменьшается около x₀. Если этот уменьшающийся наклон в x₀ равен 0, то чуть левее он положительный, а чуть правее — отрицательный.'
 };
 
 const exact = (s:string) => ru[s] ?? s;
