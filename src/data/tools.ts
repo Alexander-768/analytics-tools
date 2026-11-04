@@ -13,6 +13,7 @@ export const tools: Tool[] = [
   { id: 'joins', title: 'SQL JOINs', description: 'Visualize how tables are matched and combined with different JOIN types.', category: 'SQL', path: '/sql/joins', status: 'ready', index: '02' },
   { id: 'sample-size', title: 'Sample Size Calculator', description: 'Calculate the required sample size for an A/B test.', category: 'A/B Testing', path: '/ab-testing/sample-size', status: 'ready', index: '01' },
   { id: 'limits', title: 'Limits', description: 'Build intuition for limits, continuity, one-sided behavior and indeterminate forms through interactive graphs.', category: 'Basic Math', path: '/basic-math/limits', status: 'ready', index: '01' },
+  { id: 'derivatives', title: 'Derivatives', description: 'Understand derivatives as limits, local slopes, and the joint behavior of first and second derivatives.', category: 'Basic Math', path: '/basic-math/derivatives', status: 'ready', index: '02' },
 ];
 
 export type Category = {
