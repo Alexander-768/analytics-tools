@@ -89,6 +89,11 @@ export function DerivativesPage(){
     </section>
 
     <section className="deriv-combo">
+      <div className="deriv-core-banner">
+        <span>{t('Core intuition')}</span>
+        <strong>{t('How to read the first and second derivatives together')}</strong>
+        <p>{t('This is the central idea: the first derivative tells you the direction, the second tells you how the slope is changing.')}</p>
+      </div>
       <div className="deriv-combo-head"><span className="limit-index">03</span><h2>{t('How to read the first and second derivatives together')}</h2><p>{t('The first derivative tells you where the function is going. The second derivative tells you how the slope itself is changing.')}</p></div>
       <input className="combo-slider" type="range" min="-2.2" max="2.2" step=".02" value={comboX} onChange={e=>setComboX(+e.target.value)}/>
       <div className="deriv-current panel"><span>x <b>{comboX.toFixed(2)}</b></span><span>f(x) <b>{f(comboX).toFixed(2)}</b></span><span>f′(x) <b>{v1.toFixed(2)}</b></span><span>f″(x) <b>{v2.toFixed(2)}</b></span><strong>{stateLabel[state]}</strong></div>
