@@ -32,14 +32,14 @@ function MiniDerivativePlot({title,formula,value,x,fn,ymin,ymax}:{title:string;f
 }
 
 
-function Surface3D({pointLabel}:{pointLabel:string}){
+function Surface3D({pointLabel,fn,pointValue,extent,zAxisMax,zScale}:{pointLabel:string;fn:(x:number,y:number)=>number;pointValue:[number,number,number];extent:number;zAxisMax:number;zScale:number}){
   const [yaw,setYaw]=useState(-.72);
   const [pitch,setPitch]=useState(.62);
   const [zoom,setZoom]=useState(1);
   const [showLabels,setShowLabels]=useState(true);
   const drag=useRef<{x:number;y:number;yaw:number;pitch:number}|null>(null);
   const project=(x:number,y:number,z:number)=>{
-    const zScaled=z*.28;
+    const zScaled=z*zScale;
     const cy=Math.cos(yaw),sy=Math.sin(yaw);
     const x1=x*cy-y*sy;
     const y1=x*sy+y*cy;
@@ -48,17 +48,18 @@ function Surface3D({pointLabel}:{pointLabel:string}){
     const z2=y1*sp+zScaled*cp;
     return {x:360+x1*72*zoom,y:235-y2*72*zoom,depth:z2};
   };
-  const grid=Array.from({length:11},(_,i)=>-2.5+i*.5);
+  const grid=Array.from({length:11},(_,i)=>-extent+i*(2*extent/10));
   const linePoints=(fixed:number,alongX:boolean)=>Array.from({length:41},(_,i)=>{
-    const v=-2.5+i*5/40;
-    const x=alongX?v:fixed,y=alongX?fixed:v,z=x*x+y*y;
+    const v=-extent+i*(2*extent)/40;
+    const x=alongX?v:fixed,y=alongX?fixed:v,z=fn(x,y);
     return project(x,y,z);
   });
-  const point=project(1,2,5);
-  const origin=project(0,0,0),xAxis=project(2.8,0,0),yAxis=project(0,2.8,0),zAxis=project(0,0,8);
-  const xTicks=[-2,-1,0,1,2];
-  const yTicks=[-2,-1,0,1,2];
-  const zTicks=[0,2,4,6,8];
+  const point=project(pointValue[0],pointValue[1],pointValue[2]);
+  const origin=project(0,0,0),xAxis=project(extent*1.1,0,0),yAxis=project(0,extent*1.1,0),zAxis=project(0,0,zAxisMax);
+  const axisTick=Math.max(1,Math.round(extent/2));
+  const xTicks=[-2,-1,0,1,2].map(v=>v*axisTick).filter(v=>Math.abs(v)<=extent);
+  const yTicks=[-2,-1,0,1,2].map(v=>v*axisTick).filter(v=>Math.abs(v)<=extent);
+  const zTicks=[0,.25,.5,.75,1].map(v=>Math.round(v*zAxisMax));
   return <div className="surface3d-wrap">
     <svg className="surface3d" viewBox="0 0 720 470"
       onPointerDown={e=>{(e.currentTarget as SVGSVGElement).setPointerCapture(e.pointerId);drag.current={x:e.clientX,y:e.clientY,yaw,pitch}}}
@@ -102,6 +103,7 @@ export function DerivativesPage(){
   const [slopeX,setSlopeX]=useState(-1.4);
   const [comboX,setComboX]=useState(-1.4);
   const [maxX,setMaxX]=useState(-1.4);
+  const [partialExample,setPartialExample]=useState<1|2>(1);
 
   const square=useMemo(()=>sample(x=>x*x,-2.5,2.5),[]);
   const cubic=useMemo(()=>sample(x=>x*x*x-3*x,-2.4,2.4),[]);
@@ -126,6 +128,9 @@ export function DerivativesPage(){
     'fall-fast':t('Falling and accelerating'),
     'fall-slow':t('Falling, but slowing down')
   };
+  const partial=partialExample===1
+    ? {formula:'z = x² + y²',point:[1,2,5] as [number,number,number],dx:'2x',dy:'2y',dxVal:2,dyVal:4,fn:(x:number,y:number)=>x*x+y*y,extent:2.5,zAxisMax:8,zScale:.28}
+    : {formula:'z = 3x² + y²',point:[1,4,19] as [number,number,number],dx:'6x',dy:'2y',dxVal:6,dyVal:8,fn:(x:number,y:number)=>3*x*x+y*y,extent:4.5,zAxisMax:24,zScale:.09};
 
   return <main className="derivatives-page">
     <section className="derivatives-hero">
@@ -224,19 +229,24 @@ export function DerivativesPage(){
         <p>{t('Now the function has two inputs. A partial derivative asks: what happens to z if I change only one of them?')}</p>
       </div>
 
+      <div className="partial-example-switch segmented">
+        <button className={partialExample===1?'active':''} onClick={()=>setPartialExample(1)}>{t('Example 1')} · x² + y²</button>
+        <button className={partialExample===2?'active':''} onClick={()=>setPartialExample(2)}>{t('Example 2')} · 3x² + y²</button>
+      </div>
+
       <div className="partial-grid">
         <section className="partial-copy panel">
           <span className="limit-index">05</span>
           <h2>{t('One surface, two directions')}</h2>
-          <p>{t('For z = f(x,y) = x² + y², keep one variable fixed and move only along the other direction.')}</p>
-          <div className="partial-formula"><code>z = x² + y²</code><span>∂f/∂x = 2x</span><span>∂f/∂y = 2y</span></div>
-          <div className="partial-point-values"><span>x <b>1</b></span><span>y <b>2</b></span><span>z <b>5</b></span></div>
-          <div className="partial-point-values derivatives"><span>∂f/∂x <b>2</b></span><span>∂f/∂y <b>4</b></span></div>
-          <p className="limit-note">{t('At (1,2), the surface is locally about twice as steep in the y direction as in the x direction.')}</p>
+          <p>{partialExample===1?t('For z = f(x,y) = x² + y², keep one variable fixed and move only along the other direction.'):t('For z = f(x,y) = 3x² + y², compare the local effect of the same tiny step in x and y.')}</p>
+          <div className="partial-formula"><code>{partial.formula}</code><span>∂f/∂x = {partial.dx}</span><span>∂f/∂y = {partial.dy}</span></div>
+          <div className="partial-point-values"><span>x <b>{partial.point[0]}</b></span><span>y <b>{partial.point[1]}</b></span><span>z <b>{partial.point[2]}</b></span></div>
+          <div className="partial-point-values derivatives"><span>∂f/∂x <b>{partial.dxVal}</b></span><span>∂f/∂y <b>{partial.dyVal}</b></span></div>
+          <p className="limit-note">{partialExample===1?t('At (1,2), the surface is locally about twice as steep in the y direction as in the x direction.'):t('At (1,4), changing y a little has a larger local impact on z than changing x by the same amount: 8 versus 6.')}</p>
         </section>
         <section className="partial-surface panel">
-          <div className="partial-surface-head"><span>z = x² + y²</span><b>{t('Point')} (1, 2, 5)</b></div>
-          <Surface3D pointLabel={t('Point')+' (1,2,5)'}/>
+          <div className="partial-surface-head"><span>{partial.formula}</span><b>{t('Point')} ({partial.point.join(', ')})</b></div>
+          <Surface3D pointLabel={t('Point')+` (${partial.point.join(',')})`} fn={partial.fn} pointValue={partial.point} extent={partial.extent} zAxisMax={partial.zAxisMax} zScale={partial.zScale}/>
         </section>
       </div>
 
@@ -247,22 +257,22 @@ export function DerivativesPage(){
             <span className="partial-tag">x</span>
             <h4>{t('Change x a little, keep y fixed')}</h4>
             <div className="partial-equation">Δz ≈ (∂f/∂x) · Δx</div>
-            <p>{t('At (1,2), ∂f/∂x = 2. If Δx = 0.01, then')}</p>
-            <strong>Δz ≈ 2 · 0.01 = 0.02</strong>
-            <small>{t('So a tiny increase in x raises z by about 0.02.')}</small>
+            <p>{partialExample===1?t('At (1,2), ∂f/∂x = 2. If Δx = 0.01, then'):t('At (1,4), ∂f/∂x = 6. If Δx = 0.01, then')}</p>
+            <strong>Δz ≈ {partial.dxVal} · 0.01 = {(partial.dxVal*.01).toFixed(2)}</strong>
+            <small>{partialExample===1?t('So a tiny increase in x raises z by about 0.02.'):t('So a tiny increase in x raises z by about 0.06.')}</small>
           </article>
           <article>
             <span className="partial-tag">y</span>
             <h4>{t('Change y a little, keep x fixed')}</h4>
             <div className="partial-equation">Δz ≈ (∂f/∂y) · Δy</div>
-            <p>{t('At (1,2), ∂f/∂y = 4. If Δy = 0.01, then')}</p>
-            <strong>Δz ≈ 4 · 0.01 = 0.04</strong>
-            <small>{t('So the same tiny increase in y raises z by about 0.04.')}</small>
+            <p>{partialExample===1?t('At (1,2), ∂f/∂y = 4. If Δy = 0.01, then'):t('At (1,4), ∂f/∂y = 8. If Δy = 0.01, then')}</p>
+            <strong>Δz ≈ {partial.dyVal} · 0.01 = {(partial.dyVal*.01).toFixed(2)}</strong>
+            <small>{partialExample===1?t('So the same tiny increase in y raises z by about 0.04.'):t('So the same tiny increase in y raises z by about 0.08.')}</small>
           </article>
         </div>
         <div className="partial-summary">
           <b>{t('The intuition')}</b>
-          <p>{t('∂f/∂x tells how fast z changes when only x moves. ∂f/∂y tells how fast z changes when only y moves. Multiplying that local rate by a tiny step gives the approximate change in z.')}</p>
+          <p>{partialExample===1?t('∂f/∂x tells how fast z changes when only x moves. ∂f/∂y tells how fast z changes when only y moves. Multiplying that local rate by a tiny step gives the approximate change in z.'):t('Here ∂f/∂x = 6 and ∂f/∂y = 8. So for the same tiny step, changing y produces the larger increase in z.')}</p>
         </div>
       </section>
     </section>
