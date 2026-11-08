@@ -32,14 +32,14 @@ function MiniDerivativePlot({title,formula,value,x,fn,ymin,ymax}:{title:string;f
 }
 
 
-function Surface3D({pointLabel,fn,pointValue,extent,zAxisMax,zScale}:{pointLabel:string;fn:(x:number,y:number)=>number;pointValue:[number,number,number];extent:number;zAxisMax:number;zScale:number}){
+function Surface3D({pointLabel,fn,pointValue,extent,zAxisMax}:{pointLabel:string;fn:(x:number,y:number)=>number;pointValue:[number,number,number];extent:number;zAxisMax:number}){
   const [yaw,setYaw]=useState(-.72);
   const [pitch,setPitch]=useState(.62);
   const [zoom,setZoom]=useState(1);
   const [showLabels,setShowLabels]=useState(true);
   const drag=useRef<{x:number;y:number;yaw:number;pitch:number}|null>(null);
   const project=(x:number,y:number,z:number)=>{
-    const zScaled=z*zScale;
+    const zScaled=z;
     const cy=Math.cos(yaw),sy=Math.sin(yaw);
     const x1=x*cy-y*sy;
     const y1=x*sy+y*cy;
@@ -49,10 +49,10 @@ function Surface3D({pointLabel,fn,pointValue,extent,zAxisMax,zScale}:{pointLabel
     return {x:360+x1*72*zoom,y:235-y2*72*zoom,depth:z2};
   };
   const grid=Array.from({length:11},(_,i)=>-extent+i*(2*extent/10));
-  const linePoints=(fixed:number,alongX:boolean)=>Array.from({length:41},(_,i)=>{
-    const v=-extent+i*(2*extent)/40;
+  const linePoints=(fixed:number,alongX:boolean)=>Array.from({length:81},(_,i)=>{
+    const v=-extent+i*(2*extent)/80;
     const x=alongX?v:fixed,y=alongX?fixed:v,z=fn(x,y);
-    return project(x,y,z);
+    return z<=zAxisMax?project(x,y,z):null;
   });
   const point=project(pointValue[0],pointValue[1],pointValue[2]);
   const origin=project(0,0,0),xAxis=project(extent*1.1,0,0),yAxis=project(0,extent*1.1,0),zAxis=project(0,0,zAxisMax);
@@ -67,8 +67,8 @@ function Surface3D({pointLabel,fn,pointValue,extent,zAxisMax,zScale}:{pointLabel
       onPointerUp={()=>{drag.current=null}} onPointerCancel={()=>{drag.current=null}}
       onWheel={e=>{e.preventDefault();setZoom(z=>Math.max(.55,Math.min(2.6,z*(e.deltaY<0?1.1:.9))))}}>
       <rect x="0" y="0" width="720" height="470" className="surface-bg"/>
-      {grid.map(v=><polyline key={'x'+v} points={linePoints(v,true).map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')} className="surface-line xline"/>)}
-      {grid.map(v=><polyline key={'y'+v} points={linePoints(v,false).map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')} className="surface-line yline"/>)}
+      {grid.map(v=>{const pts=linePoints(v,true);const chunks:string[]=[];let cur:string[]=[];pts.forEach(p=>{if(p){cur.push(`${p.x.toFixed(1)},${p.y.toFixed(1)}`)}else if(cur.length){chunks.push(cur.join(' '));cur=[]}});if(cur.length)chunks.push(cur.join(' '));return chunks.map((points,i)=><polyline key={'x'+v+'-'+i} points={points} className="surface-line xline"/> )})}
+      {grid.map(v=>{const pts=linePoints(v,false);const chunks:string[]=[];let cur:string[]=[];pts.forEach(p=>{if(p){cur.push(`${p.x.toFixed(1)},${p.y.toFixed(1)}`)}else if(cur.length){chunks.push(cur.join(' '));cur=[]}});if(cur.length)chunks.push(cur.join(' '));return chunks.map((points,i)=><polyline key={'y'+v+'-'+i} points={points} className="surface-line yline"/> )})}
       <line x1={origin.x} y1={origin.y} x2={xAxis.x} y2={xAxis.y} className="surface-axis"/>
       <line x1={origin.x} y1={origin.y} x2={yAxis.x} y2={yAxis.y} className="surface-axis"/>
       <line x1={origin.x} y1={origin.y} x2={zAxis.x} y2={zAxis.y} className="surface-axis"/>
@@ -129,8 +129,8 @@ export function DerivativesPage(){
     'fall-slow':t('Falling, but slowing down')
   };
   const partial=partialExample===1
-    ? {formula:'z = x² + y²',point:[1,2,5] as [number,number,number],dx:'2x',dy:'2y',dxVal:2,dyVal:4,fn:(x:number,y:number)=>x*x+y*y,extent:4.5,zAxisMax:80,zScale:.035}
-    : {formula:'z = 3x² + y²',point:[1,4,19] as [number,number,number],dx:'6x',dy:'2y',dxVal:6,dyVal:8,fn:(x:number,y:number)=>3*x*x+y*y,extent:4.5,zAxisMax:80,zScale:.035};
+    ? {formula:'z = x² + y²',point:[1,2,5] as [number,number,number],dx:'2x',dy:'2y',dxVal:2,dyVal:4,fn:(x:number,y:number)=>x*x+y*y,extent:4.5,zAxisMax:20}
+    : {formula:'z = 3x² + y²',point:[1,4,19] as [number,number,number],dx:'6x',dy:'2y',dxVal:6,dyVal:8,fn:(x:number,y:number)=>3*x*x+y*y,extent:4.5,zAxisMax:20};
 
   return <main className="derivatives-page">
     <section className="derivatives-hero">
@@ -246,7 +246,7 @@ export function DerivativesPage(){
         </section>
         <section className="partial-surface panel">
           <div className="partial-surface-head"><span>{partial.formula}</span><b>{t('Point')} ({partial.point.join(', ')})</b></div>
-          <Surface3D pointLabel={t('Point')+` (${partial.point.join(',')})`} fn={partial.fn} pointValue={partial.point} extent={partial.extent} zAxisMax={partial.zAxisMax} zScale={partial.zScale}/>
+          <Surface3D pointLabel={t('Point')+` (${partial.point.join(',')})`} fn={partial.fn} pointValue={partial.point} extent={partial.extent} zAxisMax={partial.zAxisMax}/>
         </section>
       </div>
 
