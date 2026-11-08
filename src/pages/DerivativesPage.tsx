@@ -57,7 +57,7 @@ function Surface3D({pointLabel}:{pointLabel:string}){
   return <div className="surface3d-wrap">
     <svg className="surface3d" viewBox="0 0 720 470"
       onPointerDown={e=>{(e.currentTarget as SVGSVGElement).setPointerCapture(e.pointerId);drag.current={x:e.clientX,y:e.clientY,yaw,pitch}}}
-      onPointerMove={e=>{if(!drag.current)return;setYaw(drag.current.yaw+(e.clientX-drag.current.x)*.01);setPitch(Math.max(.2,Math.min(1.25,drag.current.pitch+(e.clientY-drag.current.y)*.008)))}}
+      onPointerMove={e=>{if(!drag.current)return;setYaw(drag.current.yaw+(e.clientX-drag.current.x)*.01);setPitch(drag.current.pitch+(e.clientY-drag.current.y)*.01)}}
       onPointerUp={()=>{drag.current=null}} onPointerCancel={()=>{drag.current=null}}>
       <rect x="0" y="0" width="720" height="470" className="surface-bg"/>
       {grid.map(v=><polyline key={'x'+v} points={linePoints(v,true).map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')} className="surface-line xline"/>)}
