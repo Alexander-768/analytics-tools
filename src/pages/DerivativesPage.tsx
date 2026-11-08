@@ -244,6 +244,10 @@ export function DerivativesPage(){
           <div className="partial-point-values"><span>x <b>{partial.point[0]}</b></span><span>y <b>{partial.point[1]}</b></span><span>z <b>{partial.point[2]}</b></span></div>
           <div className="partial-point-values derivatives"><span>∂f/∂x <b>{partial.dxVal}</b></span><span>∂f/∂y <b>{partial.dyVal}</b></span></div>
           <p className="limit-note">{partialExample===1?t('At (1,2), the surface is locally about twice as steep in the y direction as in the x direction.'):t('At (1,4), changing y a little has a larger local impact on z than changing x by the same amount: 8 versus 6.')}</p>
+          {partialExample===2&&<div className="partial-sensitivity-note">
+            <b>{t('Think of 6x and 2y as a local sensitivity map')}</b>
+            <p>{t('They do not say that the function is always more sensitive to x or always more sensitive to y. In any point (x,y), plug in the current x and y and you immediately see how strongly z reacts right there to a tiny move in each direction.')}</p>
+          </div>}
         </section>
         <section className="partial-surface panel">
           <div className="partial-surface-head"><span>{partial.formula}</span><b>{t('Point')} ({partial.point.join(', ')})</b></div>
