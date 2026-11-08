@@ -57,6 +57,7 @@ const ru: Record<string,string> = {
   'First in partition':'Первая в партиции',
   'Last in full frame':'Последняя во всём фрейме',
   'Visualization':'Визуализация',
+  'How it looks in 3D':'Как это выглядит в 3D',
   'Employee data':'Данные сотрудников',
   'Source / peers':'Источник / peers',
   'Current row':'Текущая строка',
