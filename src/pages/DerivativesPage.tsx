@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLanguage } from '../i18n';
 
 type Pt={x:number;y:number};
@@ -97,6 +97,58 @@ function Surface3D({pointLabel,fn,pointValue,extent,zAxisMax,zScale}:{pointLabel
   </div>
 }
 
+
+function GradientContour({angle,mode}:{angle:number;mode:'axes'|'gradient'|'sweep'}){
+  const W=720,H=440,P=42,xmin=-3.2,xmax=3.8,ymin=-3.2,ymax=3.8;
+  const sx=(x:number)=>P+(x-xmin)/(xmax-xmin)*(W-P*2);
+  const sy=(y:number)=>H-P-(y-ymin)/(ymax-ymin)*(H-P*2);
+  const p={x:2,y:2};
+  const grad={x:12,y:4};
+  const gnorm=Math.hypot(grad.x,grad.y);
+  const unitGrad={x:grad.x/gnorm,y:grad.y/gnorm};
+  const u={x:Math.cos(angle),y:Math.sin(angle)};
+  const arrow=(dx:number,dy:number,len:number,cls:string,label:string)=>{
+    const n=Math.hypot(dx,dy)||1,ex=p.x+dx/n*len,ey=p.y+dy/n*len;
+    return <g className={cls}>
+      <line x1={sx(p.x)} y1={sy(p.y)} x2={sx(ex)} y2={sy(ey)} markerEnd="url(#gradArrow)"/>
+      <text x={sx(ex)+8} y={sy(ey)-7}>{label}</text>
+    </g>;
+  };
+  const levels=[2,5,10,16,24,34,46];
+  return <svg className="gradient-contour" viewBox={`0 0 ${W} ${H}`}>
+    <defs><marker id="gradArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z"/></marker></defs>
+    <rect width={W} height={H} className="gradient-bg"/>
+    <line x1={sx(xmin)} y1={sy(0)} x2={sx(xmax)} y2={sy(0)} className="gradient-axis"/>
+    <line x1={sx(0)} y1={sy(ymin)} x2={sx(0)} y2={sy(ymax)} className="gradient-axis"/>
+    {[-3,-2,-1,0,1,2,3].map(v=><g key={'gx'+v}><line x1={sx(v)} y1={sy(ymin)} x2={sx(v)} y2={sy(ymax)} className="gradient-grid"/><text x={sx(v)+3} y={sy(0)+14}>{v}</text></g>)}
+    {[-3,-2,-1,1,2,3].map(v=><g key={'gy'+v}><line x1={sx(xmin)} y1={sy(v)} x2={sx(xmax)} y2={sy(v)} className="gradient-grid"/><text x={sx(0)+5} y={sy(v)-4}>{v}</text></g>)}
+    {levels.map(c=>{const rx=Math.sqrt(c/3),ry=Math.sqrt(c);return <ellipse key={c} cx={sx(0)} cy={sy(0)} rx={Math.abs(sx(rx)-sx(0))} ry={Math.abs(sy(ry)-sy(0))} className="gradient-level"/>})}
+    <circle cx={sx(p.x)} cy={sy(p.y)} r="6" className="gradient-point"/><text x={sx(p.x)+9} y={sy(p.y)-10} className="gradient-point-label">(2,2)</text>
+    {mode==='axes'&&<>{arrow(1,0,1.15,'gradient-arrow x-only','x-only')}{arrow(0,1,1.15,'gradient-arrow y-only','y-only')}</>}
+    {mode==='gradient'&&arrow(unitGrad.x,unitGrad.y,1.55,'gradient-arrow best','∇f = (12,4)')}
+    {mode==='sweep'&&<>{arrow(u.x,u.y,1.55,'gradient-arrow sweep','u')}{arrow(unitGrad.x,unitGrad.y,1.1,'gradient-arrow ghost','∇f')}</>}
+  </svg>;
+}
+
+function DirectionDerivativePlot({angle}:{angle:number}){
+  const W=720,H=220,P=38;
+  const ymin=-13.5,ymax=13.5;
+  const sx=(x:number)=>P+x/(Math.PI*2)*(W-P*2);
+  const sy=(y:number)=>H-P-(y-ymin)/(ymax-ymin)*(H-P*2);
+  const val=(a:number)=>12*Math.cos(a)+4*Math.sin(a);
+  const pts=Array.from({length:181},(_,i)=>{const a=i*Math.PI*2/180;return {a,v:val(a)}});
+  const d=pts.map((p,i)=>`${i?'L':'M'} ${sx(p.a).toFixed(2)} ${sy(p.v).toFixed(2)}`).join(' ');
+  const current=val(angle),max=Math.sqrt(160);
+  return <svg className="direction-plot" viewBox={`0 0 ${W} ${H}`}>
+    <line x1={P} y1={sy(0)} x2={W-P} y2={sy(0)} className="gradient-axis"/>
+    <path d={d} className="direction-curve"/>
+    <line x1={sx(angle)} y1={P} x2={sx(angle)} y2={H-P} className="direction-guide"/>
+    <circle cx={sx(angle)} cy={sy(current)} r="5" className="direction-dot"/>
+    <text x={sx(angle)+8} y={sy(current)-8}>{current.toFixed(2)}</text>
+    <text x={sx(Math.atan2(4,12))} y={sy(max)-9} className="direction-max-label">max ≈ {max.toFixed(2)}</text>
+  </svg>;
+}
+
 export function DerivativesPage(){
   const {t}=useLanguage();
   const [x0,setX0]=useState(1);
@@ -105,6 +157,9 @@ export function DerivativesPage(){
   const [comboX,setComboX]=useState(-1.4);
   const [maxX,setMaxX]=useState(-1.4);
   const [partialExample,setPartialExample]=useState<1|2>(1);
+  const [gradientMode,setGradientMode]=useState<'axes'|'gradient'|'sweep'>('axes');
+  const [gradientAngle,setGradientAngle]=useState(0);
+  const [gradientPlaying,setGradientPlaying]=useState(false);
 
   const square=useMemo(()=>sample(x=>x*x,-2.5,2.5),[]);
   const cubic=useMemo(()=>sample(x=>x*x*x-3*x,-2.4,2.4),[]);
@@ -132,6 +187,18 @@ export function DerivativesPage(){
   const partial=partialExample===1
     ? {formula:'z = x² + y²',point:[1,2,5] as [number,number,number],dx:'2x',dy:'2y',dxVal:2,dyVal:4,fn:(x:number,y:number)=>x*x+y*y,extent:2.5,zAxisMax:8,zScale:.28}
     : {formula:'z = 3x² + y²',point:[1,4,19] as [number,number,number],dx:'6x',dy:'2y',dxVal:6,dyVal:8,fn:(x:number,y:number)=>3*x*x+y*y,extent:4.5,zAxisMax:80,zScale:.035};
+  const gradientValue=12*Math.cos(gradientAngle)+4*Math.sin(gradientAngle);
+  const gradientBestAngle=Math.atan2(4,12);
+  useEffect(()=>{
+    if(!gradientPlaying)return;
+    let frame=0,last=performance.now();
+    const tick=(now:number)=>{
+      if(now-last>30){setGradientAngle(a=>(a+.025)%(Math.PI*2));last=now}
+      frame=requestAnimationFrame(tick);
+    };
+    frame=requestAnimationFrame(tick);
+    return()=>cancelAnimationFrame(frame);
+  },[gradientPlaying]);
 
   return <main className="derivatives-page">
     <section className="derivatives-hero">
@@ -279,6 +346,76 @@ export function DerivativesPage(){
           <b>{t('The intuition')}</b>
           <p>{partialExample===1?t('∂f/∂x tells how fast z changes when only x moves. ∂f/∂y tells how fast z changes when only y moves. Multiplying that local rate by a tiny step gives the approximate change in z.'):t('Here ∂f/∂x = 6 and ∂f/∂y = 8. So for the same tiny step, changing y produces the larger increase in z.')}</p>
         </div>
+      </section>
+    </section>
+
+    <section className="gradient-section">
+      <div className="deriv-core-banner gradient-banner">
+        <span>{t('Next step')}</span>
+        <strong>{t('Gradient: the direction of maximum increase')}</strong>
+        <p>{t('Partial derivatives tell us how profitable each coordinate is locally. The gradient combines them and tells us how to move all arguments together for the fastest local growth.')}</p>
+      </div>
+
+      <div className="deriv-combo-head">
+        <span className="limit-index">06</span>
+        <h2>{t('If both x and y can move, where should we go?')}</h2>
+        <p>{t('Use f(x,y)=3x²+y² at the point (2,2). Here ∂f/∂x=12 and ∂f/∂y=4.')}</p>
+      </div>
+
+      <div className="gradient-values panel">
+        <span>x <b>2</b></span><span>y <b>2</b></span><span>f(x,y) <b>16</b></span><span>∂f/∂x <b>12</b></span><span>∂f/∂y <b>4</b></span><strong>∇f = (12,4)</strong>
+      </div>
+
+      <div className="gradient-modes segmented">
+        <button className={gradientMode==='axes'?'active':''} onClick={()=>{setGradientMode('axes');setGradientPlaying(false)}}>{t('1 · One axis at a time')}</button>
+        <button className={gradientMode==='gradient'?'active':''} onClick={()=>{setGradientMode('gradient');setGradientPlaying(false)}}>{t('2 · Gradient')}</button>
+        <button className={gradientMode==='sweep'?'active':''} onClick={()=>setGradientMode('sweep')}>{t('3 · Try every direction')}</button>
+      </div>
+
+      <div className="gradient-grid-layout">
+        <section className="gradient-visual panel">
+          <div className="gradient-visual-head"><span>f(x,y)=3x²+y²</span><b>{t('Contour map')}</b></div>
+          <GradientContour angle={gradientAngle} mode={gradientMode}/>
+        </section>
+        <section className="gradient-explain panel">
+          {gradientMode==='axes'&&<>
+            <span className="gradient-step">01</span><h3>{t('First, imagine that only one coordinate can move')}</h3>
+            <p>{t('If we can move only x, choose x: the local growth rate is 12, while along y it is only 4.')}</p>
+            <div className="gradient-mini"><b>x-only</b><span>rate = 12</span></div><div className="gradient-mini"><b>y-only</b><span>rate = 4</span></div>
+          </>}
+          {gradientMode==='gradient'&&<>
+            <span className="gradient-step">02</span><h3>{t('Now allow both coordinates to move')}</h3>
+            <p>{t('We no longer have to spend the whole move on x or y. We combine both local sensitivities: more movement in x because 12 is larger, but some movement in y because 4 is still positive.')}</p>
+            <div className="gradient-formula">∇f(2,2) = (12,4)</div>
+            <p className="gradient-emphasis">{t('The gradient is a local compass: it points in the direction where the whole function increases fastest.')}</p>
+          </>}
+          {gradientMode==='sweep'&&<>
+            <span className="gradient-step">03</span><h3>{t('Check every possible direction')}</h3>
+            <p>{t('Rotate the direction u. Its growth rate is the directional derivative Dᵤf = ∇f · u. The maximum appears when u points in the same direction as the gradient.')}</p>
+            <div className="gradient-speed"><span>{t('Current growth rate')}</span><b>{gradientValue.toFixed(2)}</b></div>
+            <div className="gradient-speed"><span>{t('Best possible rate')}</span><b>{Math.sqrt(160).toFixed(2)}</b></div>
+            <p className={Math.abs(((gradientAngle-gradientBestAngle+Math.PI)%(2*Math.PI))-Math.PI)<.08?'gradient-hit':''}>{t('Maximum when u is aligned with ∇f.')}</p>
+          </>}
+        </section>
+      </div>
+
+      {gradientMode==='sweep'&&<section className="direction-panel panel">
+        <div className="direction-head">
+          <div><b>{t('Directional derivative')}</b><span>Dᵤf = 12 cos θ + 4 sin θ</span></div>
+          <div className="direction-actions">
+            <button onClick={()=>setGradientPlaying(v=>!v)}>{gradientPlaying?t('Pause'):t('Run visualization')}</button>
+            <button onClick={()=>{setGradientPlaying(false);setGradientAngle(gradientBestAngle)}}>{t('Show maximum')}</button>
+            <button onClick={()=>{setGradientPlaying(false);setGradientAngle(0)}}>{t('Reset')}</button>
+          </div>
+        </div>
+        <input type="range" min="0" max={Math.PI*2} step=".01" value={gradientAngle} onChange={e=>{setGradientPlaying(false);setGradientAngle(+e.target.value)}}/>
+        <div className="direction-meta"><span>θ = {(gradientAngle*180/Math.PI).toFixed(0)}°</span><span>u = ({Math.cos(gradientAngle).toFixed(2)}, {Math.sin(gradientAngle).toFixed(2)})</span><span>Dᵤf = {gradientValue.toFixed(2)}</span></div>
+        <DirectionDerivativePlot angle={gradientAngle}/>
+      </section>}
+
+      <section className="gradient-summary panel">
+        <b>{t('Simple intuition')}</b>
+        <p>{t('At one point, the partial derivatives are just two local speeds: 12 along x and 4 along y. If only one axis is allowed, x wins. If both are allowed, the best move uses both — in the ratio 12:4. That direction is the gradient.')}</p>
       </section>
     </section>
   </main>;
