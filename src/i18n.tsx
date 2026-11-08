@@ -241,7 +241,7 @@ const ru: Record<string,string> = {
   'So a tiny increase in x raises z by about 0.06.':'Значит, маленькое увеличение x повышает z примерно на 0.06.',
   'At (1,4), ∂f/∂y = 8. If Δy = 0.01, then':'В точке (1,4) ∂f/∂y = 8. Если Δy = 0.01, то',
   'So the same tiny increase in y raises z by about 0.08.':'Значит, такое же маленькое увеличение y повышает z примерно на 0.08.',
-  'Here ∂f/∂x = 6 and ∂f/∂y = 8. So for the same tiny step, changing y produces the larger increase in z.':'Здесь ∂f/∂x = 6, а ∂f/∂y = 8. Поэтому при одинаковом маленьком шаге изменение y даёт больший прирост z.'
+  'Here ∂f/∂x = 6 and ∂f/∂y = 8. So for the same tiny step, changing y produces the larger increase in z.':'Здесь ∂f/∂x = 6, а ∂f/∂y = 8. Поэтому при одинаковом маленьком шаге изменение y даёт больший прирост z.',
   'Point':'Точка',
   'Local meaning':'Локальный смысл',
   'A partial derivative is the local rate of change in one chosen direction.':'Частная производная — это локальная скорость изменения в одном выбранном направлении.',
