@@ -237,6 +237,8 @@ const ru: Record<string,string> = {
   'Example 2':'Пример 2',
   'For z = f(x,y) = 3x² + y², compare the local effect of the same tiny step in x and y.':'Для z = f(x,y) = 3x² + y² сравни локальный эффект одинакового маленького шага по x и по y.',
   'At (1,4), changing y a little has a larger local impact on z than changing x by the same amount: 8 versus 6.':'В точке (1,4) небольшое изменение y даёт больший локальный импакт на z, чем такое же изменение x: 8 против 6.',
+  'Think of 6x and 2y as a local sensitivity map':'Думай о 6x и 2y как о карте локальной чувствительности',
+  'They do not say that the function is always more sensitive to x or always more sensitive to y. In any point (x,y), plug in the current x and y and you immediately see how strongly z reacts right there to a tiny move in each direction.':'Они не говорят, что функция всегда чувствительнее к x или всегда чувствительнее к y. В любой точке (x,y) подставь текущие x и y — и сразу увидишь, насколько именно здесь z реагирует на маленькое движение по каждому направлению.'
   'At (1,4), ∂f/∂x = 6. If Δx = 0.01, then':'В точке (1,4) ∂f/∂x = 6. Если Δx = 0.01, то',
   'So a tiny increase in x raises z by about 0.06.':'Значит, маленькое увеличение x повышает z примерно на 0.06.',
   'At (1,4), ∂f/∂y = 8. If Δy = 0.01, then':'В точке (1,4) ∂f/∂y = 8. Если Δy = 0.01, то',
