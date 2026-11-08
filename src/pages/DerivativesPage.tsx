@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useLanguage } from '../i18n';
 
 type Pt={x:number;y:number};
@@ -29,6 +29,50 @@ function Plot({curves,xmin,xmax,ymin,ymax,markers=[],line,lines=[]}:{
 function MiniDerivativePlot({title,formula,value,x,fn,ymin,ymax}:{title:string;formula:string;value:number;x:number;fn:(x:number)=>number;ymin:number;ymax:number}){
   const pts=sample(fn,-2.4,2.4,180);
   return <section className="deriv-mini panel"><div className="deriv-mini-head"><div><span>{title}</span><code>{formula}</code></div><b>{value.toFixed(2)}</b></div><Plot curves={[{pts}]} xmin={-2.4} xmax={2.4} ymin={ymin} ymax={ymax} markers={[{x,y:fn(x),label:`x=${x.toFixed(2)}`}]} /></section>
+}
+
+
+function Surface3D({pointLabel}:{pointLabel:string}){
+  const [yaw,setYaw]=useState(-.72);
+  const [pitch,setPitch]=useState(.62);
+  const drag=useRef<{x:number;y:number;yaw:number;pitch:number}|null>(null);
+  const project=(x:number,y:number,z:number)=>{
+    const zScaled=z*.28;
+    const cy=Math.cos(yaw),sy=Math.sin(yaw);
+    const x1=x*cy-y*sy;
+    const y1=x*sy+y*cy;
+    const cp=Math.cos(pitch),sp=Math.sin(pitch);
+    const y2=y1*cp-zScaled*sp;
+    const z2=y1*sp+zScaled*cp;
+    return {x:360+x1*72,y:235-y2*72,depth:z2};
+  };
+  const grid=Array.from({length:11},(_,i)=>-2.5+i*.5);
+  const linePoints=(fixed:number,alongX:boolean)=>Array.from({length:41},(_,i)=>{
+    const v=-2.5+i*5/40;
+    const x=alongX?v:fixed,y=alongX?fixed:v,z=x*x+y*y;
+    return project(x,y,z);
+  });
+  const point=project(1,2,5);
+  const origin=project(0,0,0),xAxis=project(2.8,0,0),yAxis=project(0,2.8,0),zAxis=project(0,0,8);
+  return <div className="surface3d-wrap">
+    <svg className="surface3d" viewBox="0 0 720 470"
+      onPointerDown={e=>{(e.currentTarget as SVGSVGElement).setPointerCapture(e.pointerId);drag.current={x:e.clientX,y:e.clientY,yaw,pitch}}}
+      onPointerMove={e=>{if(!drag.current)return;setYaw(drag.current.yaw+(e.clientX-drag.current.x)*.01);setPitch(Math.max(.2,Math.min(1.25,drag.current.pitch+(e.clientY-drag.current.y)*.008)))}}
+      onPointerUp={()=>{drag.current=null}} onPointerCancel={()=>{drag.current=null}}>
+      <rect x="0" y="0" width="720" height="470" className="surface-bg"/>
+      {grid.map(v=><polyline key={'x'+v} points={linePoints(v,true).map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')} className="surface-line xline"/>)}
+      {grid.map(v=><polyline key={'y'+v} points={linePoints(v,false).map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')} className="surface-line yline"/>)}
+      <line x1={origin.x} y1={origin.y} x2={xAxis.x} y2={xAxis.y} className="surface-axis"/>
+      <line x1={origin.x} y1={origin.y} x2={yAxis.x} y2={yAxis.y} className="surface-axis"/>
+      <line x1={origin.x} y1={origin.y} x2={zAxis.x} y2={zAxis.y} className="surface-axis"/>
+      <text x={xAxis.x+7} y={xAxis.y}>x</text><text x={yAxis.x+7} y={yAxis.y}>y</text><text x={zAxis.x+7} y={zAxis.y}>z</text>
+      <circle cx={point.x} cy={point.y} r="7" className="surface-point"/>
+      <circle cx={point.x} cy={point.y} r="13" className="surface-point-ring"/>
+      <text x={point.x+13} y={point.y-12} className="surface-point-label">{pointLabel}</text>
+    </svg>
+    <div className="surface3d-hint">↔ {pointLabel.includes('Точка')?'тащи мышкой, чтобы вращать':'drag to rotate'}</div>
+    <button className="surface-reset" onClick={()=>{setYaw(-.72);setPitch(.62)}}>↺</button>
+  </div>
 }
 
 export function DerivativesPage(){
@@ -150,6 +194,56 @@ export function DerivativesPage(){
         <b>{t('Key idea')}</b>
         <p>{t('f″(x₀)<0 does not directly say “the function decreases”. It says the slope f′ is decreasing near x₀. If that decreasing slope is exactly 0 at x₀, then just before x₀ it is positive and just after x₀ it is negative.')}</p>
         <code>f′&gt;0 → f′=0 → f′&lt;0</code>
+      </section>
+    </section>
+
+    <section className="partial-section">
+      <div className="deriv-core-banner partial-banner">
+        <span>{t('New dimension')}</span>
+        <strong>{t('Partial derivatives')}</strong>
+        <p>{t('Now the function has two inputs. A partial derivative asks: what happens to z if I change only one of them?')}</p>
+      </div>
+
+      <div className="partial-grid">
+        <section className="partial-copy panel">
+          <span className="limit-index">05</span>
+          <h2>{t('One surface, two directions')}</h2>
+          <p>{t('For z = f(x,y) = x² + y², keep one variable fixed and move only along the other direction.')}</p>
+          <div className="partial-formula"><code>z = x² + y²</code><span>∂f/∂x = 2x</span><span>∂f/∂y = 2y</span></div>
+          <div className="partial-point-values"><span>x <b>1</b></span><span>y <b>2</b></span><span>z <b>5</b></span></div>
+          <div className="partial-point-values derivatives"><span>∂f/∂x <b>2</b></span><span>∂f/∂y <b>4</b></span></div>
+          <p className="limit-note">{t('At (1,2), the surface is locally about twice as steep in the y direction as in the x direction.')}</p>
+        </section>
+        <section className="partial-surface panel">
+          <div className="partial-surface-head"><span>z = x² + y²</span><b>{t('Point')} (1, 2, 5)</b></div>
+          <Surface3D pointLabel={t('Point')+' (1,2,5)'}/>
+        </section>
+      </div>
+
+      <section className="partial-explain panel">
+        <div className="partial-explain-head"><span>{t('Local meaning')}</span><h3>{t('A partial derivative is the local rate of change in one chosen direction.')}</h3></div>
+        <div className="partial-cards">
+          <article>
+            <span className="partial-tag">x</span>
+            <h4>{t('Change x a little, keep y fixed')}</h4>
+            <div className="partial-equation">Δz ≈ (∂f/∂x) · Δx</div>
+            <p>{t('At (1,2), ∂f/∂x = 2. If Δx = 0.01, then')}</p>
+            <strong>Δz ≈ 2 · 0.01 = 0.02</strong>
+            <small>{t('So a tiny increase in x raises z by about 0.02.')}</small>
+          </article>
+          <article>
+            <span className="partial-tag">y</span>
+            <h4>{t('Change y a little, keep x fixed')}</h4>
+            <div className="partial-equation">Δz ≈ (∂f/∂y) · Δy</div>
+            <p>{t('At (1,2), ∂f/∂y = 4. If Δy = 0.01, then')}</p>
+            <strong>Δz ≈ 4 · 0.01 = 0.04</strong>
+            <small>{t('So the same tiny increase in y raises z by about 0.04.')}</small>
+          </article>
+        </div>
+        <div className="partial-summary">
+          <b>{t('The intuition')}</b>
+          <p>{t('∂f/∂x tells how fast z changes when only x moves. ∂f/∂y tells how fast z changes when only y moves. Multiplying that local rate by a tiny step gives the approximate change in z.')}</p>
+        </div>
       </section>
     </section>
   </main>;
