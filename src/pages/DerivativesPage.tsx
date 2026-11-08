@@ -35,6 +35,7 @@ function MiniDerivativePlot({title,formula,value,x,fn,ymin,ymax}:{title:string;f
 function Surface3D({pointLabel}:{pointLabel:string}){
   const [yaw,setYaw]=useState(-.72);
   const [pitch,setPitch]=useState(.62);
+  const [zoom,setZoom]=useState(1);
   const drag=useRef<{x:number;y:number;yaw:number;pitch:number}|null>(null);
   const project=(x:number,y:number,z:number)=>{
     const zScaled=z*.28;
@@ -44,7 +45,7 @@ function Surface3D({pointLabel}:{pointLabel:string}){
     const cp=Math.cos(pitch),sp=Math.sin(pitch);
     const y2=y1*cp-zScaled*sp;
     const z2=y1*sp+zScaled*cp;
-    return {x:360+x1*72,y:235-y2*72,depth:z2};
+    return {x:360+x1*72*zoom,y:235-y2*72*zoom,depth:z2};
   };
   const grid=Array.from({length:11},(_,i)=>-2.5+i*.5);
   const linePoints=(fixed:number,alongX:boolean)=>Array.from({length:41},(_,i)=>{
@@ -58,7 +59,8 @@ function Surface3D({pointLabel}:{pointLabel:string}){
     <svg className="surface3d" viewBox="0 0 720 470"
       onPointerDown={e=>{(e.currentTarget as SVGSVGElement).setPointerCapture(e.pointerId);drag.current={x:e.clientX,y:e.clientY,yaw,pitch}}}
       onPointerMove={e=>{if(!drag.current)return;setYaw(drag.current.yaw+(e.clientX-drag.current.x)*.01);setPitch(drag.current.pitch+(e.clientY-drag.current.y)*.01)}}
-      onPointerUp={()=>{drag.current=null}} onPointerCancel={()=>{drag.current=null}}>
+      onPointerUp={()=>{drag.current=null}} onPointerCancel={()=>{drag.current=null}}
+      onWheel={e=>{e.preventDefault();setZoom(z=>Math.max(.55,Math.min(2.6,z*(e.deltaY<0?1.1:.9))))}}>
       <rect x="0" y="0" width="720" height="470" className="surface-bg"/>
       {grid.map(v=><polyline key={'x'+v} points={linePoints(v,true).map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')} className="surface-line xline"/>)}
       {grid.map(v=><polyline key={'y'+v} points={linePoints(v,false).map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')} className="surface-line yline"/>)}
@@ -70,8 +72,13 @@ function Surface3D({pointLabel}:{pointLabel:string}){
       <circle cx={point.x} cy={point.y} r="13" className="surface-point-ring"/>
       <text x={point.x+13} y={point.y-12} className="surface-point-label">{pointLabel}</text>
     </svg>
-    <div className="surface3d-hint">↔ {pointLabel.includes('Точка')?'тащи мышкой, чтобы вращать':'drag to rotate'}</div>
-    <button className="surface-reset" onClick={()=>{setYaw(-.72);setPitch(.62)}}>↺</button>
+    <div className="surface3d-hint">↔ {pointLabel.includes('Точка')?'тащи — вращение · колесо/трекпад — масштаб':'drag to rotate · wheel/trackpad to zoom'}</div>
+    <div className="surface-controls">
+      <button type="button" onClick={()=>setZoom(z=>Math.max(.55,z/1.18))}>−</button>
+      <span>{Math.round(zoom*100)}%</span>
+      <button type="button" onClick={()=>setZoom(z=>Math.min(2.6,z*1.18))}>+</button>
+      <button type="button" className="surface-reset" onClick={()=>{setYaw(-.72);setPitch(.62);setZoom(1)}}>↺</button>
+    </div>
   </div>
 }
 
