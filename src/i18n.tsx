@@ -227,6 +227,23 @@ const ru: Record<string,string> = {
   'Before x₀: the function is increasing':'До x₀: функция растёт',
   'After x₀: the function is decreasing':'После x₀: функция убывает',
   'At x₀: horizontal tangent, local maximum':'В x₀: горизонтальная касательная, локальный максимум',
+  'New dimension':'Новое измерение',
+  'Partial derivatives':'Частные производные',
+  'Now the function has two inputs. A partial derivative asks: what happens to z if I change only one of them?':'Теперь у функции два входа. Частная производная отвечает: что произойдёт с z, если менять только один из них?',
+  'One surface, two directions':'Одна поверхность, два направления',
+  'For z = f(x,y) = x² + y², keep one variable fixed and move only along the other direction.':'Для z = f(x,y) = x² + y² зафиксируй одну переменную и двигайся только по другой.',
+  'At (1,2), the surface is locally about twice as steep in the y direction as in the x direction.':'В точке (1,2) поверхность локально примерно в два раза круче по направлению y, чем по направлению x.',
+  'Point':'Точка',
+  'Local meaning':'Локальный смысл',
+  'A partial derivative is the local rate of change in one chosen direction.':'Частная производная — это локальная скорость изменения в одном выбранном направлении.',
+  'Change x a little, keep y fixed':'Немного измени x, y оставь фиксированным',
+  'At (1,2), ∂f/∂x = 2. If Δx = 0.01, then':'В точке (1,2) ∂f/∂x = 2. Если Δx = 0.01, то',
+  'So a tiny increase in x raises z by about 0.02.':'Значит, маленькое увеличение x повышает z примерно на 0.02.',
+  'Change y a little, keep x fixed':'Немного измени y, x оставь фиксированным',
+  'At (1,2), ∂f/∂y = 4. If Δy = 0.01, then':'В точке (1,2) ∂f/∂y = 4. Если Δy = 0.01, то',
+  'So the same tiny increase in y raises z by about 0.04.':'Значит, такое же маленькое увеличение y повышает z примерно на 0.04.',
+  'The intuition':'Интуиция',
+  '∂f/∂x tells how fast z changes when only x moves. ∂f/∂y tells how fast z changes when only y moves. Multiplying that local rate by a tiny step gives the approximate change in z.':'∂f/∂x показывает, как быстро меняется z, когда двигается только x. ∂f/∂y — когда двигается только y. Умножив эту локальную скорость на маленький шаг, получаем приближённое изменение z.'
   'Key idea':'Главная мысль',
   'f″(x₀)<0 does not directly say “the function decreases”. It says the slope f′ is decreasing near x₀. If that decreasing slope is exactly 0 at x₀, then just before x₀ it is positive and just after x₀ it is negative.':'f″(x₀)<0 не говорит напрямую «функция убывает». Это значит, что наклон f′ уменьшается около x₀. Если этот уменьшающийся наклон в x₀ равен 0, то чуть левее он положительный, а чуть правее — отрицательный.'
 };
