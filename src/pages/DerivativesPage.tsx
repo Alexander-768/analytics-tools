@@ -129,8 +129,8 @@ export function DerivativesPage(){
     'fall-slow':t('Falling, but slowing down')
   };
   const partial=partialExample===1
-    ? {formula:'z = x² + y²',point:[1,2,5] as [number,number,number],dx:'2x',dy:'2y',dxVal:2,dyVal:4,fn:(x:number,y:number)=>x*x+y*y,extent:2.5,zAxisMax:8,zScale:.28}
-    : {formula:'z = 3x² + y²',point:[1,4,19] as [number,number,number],dx:'6x',dy:'2y',dxVal:6,dyVal:8,fn:(x:number,y:number)=>3*x*x+y*y,extent:4.5,zAxisMax:24,zScale:.09};
+    ? {formula:'z = x² + y²',point:[1,2,5] as [number,number,number],dx:'2x',dy:'2y',dxVal:2,dyVal:4,fn:(x:number,y:number)=>x*x+y*y,extent:4.5,zAxisMax:80,zScale:.035}
+    : {formula:'z = 3x² + y²',point:[1,4,19] as [number,number,number],dx:'6x',dy:'2y',dxVal:6,dyVal:8,fn:(x:number,y:number)=>3*x*x+y*y,extent:4.5,zAxisMax:80,zScale:.035};
 
   return <main className="derivatives-page">
     <section className="derivatives-hero">
