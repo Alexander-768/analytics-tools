@@ -376,6 +376,7 @@ export function DerivativesPage(){
         <section className="gradient-visual panel">
           <div className="gradient-visual-head"><span>f(x,y)=3x²+y²</span><b>{t('Contour map')}</b></div>
           <GradientContour angle={gradientAngle} mode={gradientMode}/>
+          <a className="deriv-action gradient-3d-link" href="https://www.desmos.com/3d/rzzz43e9pk" target="_blank" rel="noreferrer">{t('How it looks in 3D')}</a>
         </section>
         <section className="gradient-explain panel">
           {gradientMode==='axes'&&<>
