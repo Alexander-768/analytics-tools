@@ -243,7 +243,7 @@ const ru: Record<string,string> = {
   'At (1,2), ∂f/∂y = 4. If Δy = 0.01, then':'В точке (1,2) ∂f/∂y = 4. Если Δy = 0.01, то',
   'So the same tiny increase in y raises z by about 0.04.':'Значит, такое же маленькое увеличение y повышает z примерно на 0.04.',
   'The intuition':'Интуиция',
-  '∂f/∂x tells how fast z changes when only x moves. ∂f/∂y tells how fast z changes when only y moves. Multiplying that local rate by a tiny step gives the approximate change in z.':'∂f/∂x показывает, как быстро меняется z, когда двигается только x. ∂f/∂y — когда двигается только y. Умножив эту локальную скорость на маленький шаг, получаем приближённое изменение z.'
+  '∂f/∂x tells how fast z changes when only x moves. ∂f/∂y tells how fast z changes when only y moves. Multiplying that local rate by a tiny step gives the approximate change in z.':'∂f/∂x показывает, как быстро меняется z, когда двигается только x. ∂f/∂y — когда двигается только y. Умножив эту локальную скорость на маленький шаг, получаем приближённое изменение z.',
   'Key idea':'Главная мысль',
   'f″(x₀)<0 does not directly say “the function decreases”. It says the slope f′ is decreasing near x₀. If that decreasing slope is exactly 0 at x₀, then just before x₀ it is positive and just after x₀ it is negative.':'f″(x₀)<0 не говорит напрямую «функция убывает». Это значит, что наклон f′ уменьшается около x₀. Если этот уменьшающийся наклон в x₀ равен 0, то чуть левее он положительный, а чуть правее — отрицательный.'
 };
