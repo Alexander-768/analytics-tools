@@ -36,6 +36,7 @@ function Surface3D({pointLabel}:{pointLabel:string}){
   const [yaw,setYaw]=useState(-.72);
   const [pitch,setPitch]=useState(.62);
   const [zoom,setZoom]=useState(1);
+  const [showLabels,setShowLabels]=useState(true);
   const drag=useRef<{x:number;y:number;yaw:number;pitch:number}|null>(null);
   const project=(x:number,y:number,z:number)=>{
     const zScaled=z*.28;
@@ -55,6 +56,9 @@ function Surface3D({pointLabel}:{pointLabel:string}){
   });
   const point=project(1,2,5);
   const origin=project(0,0,0),xAxis=project(2.8,0,0),yAxis=project(0,2.8,0),zAxis=project(0,0,8);
+  const xTicks=[-2,-1,0,1,2];
+  const yTicks=[-2,-1,0,1,2];
+  const zTicks=[0,2,4,6,8];
   return <div className="surface3d-wrap">
     <svg className="surface3d" viewBox="0 0 720 470"
       onPointerDown={e=>{(e.currentTarget as SVGSVGElement).setPointerCapture(e.pointerId);drag.current={x:e.clientX,y:e.clientY,yaw,pitch}}}
@@ -67,12 +71,21 @@ function Surface3D({pointLabel}:{pointLabel:string}){
       <line x1={origin.x} y1={origin.y} x2={xAxis.x} y2={xAxis.y} className="surface-axis"/>
       <line x1={origin.x} y1={origin.y} x2={yAxis.x} y2={yAxis.y} className="surface-axis"/>
       <line x1={origin.x} y1={origin.y} x2={zAxis.x} y2={zAxis.y} className="surface-axis"/>
-      <text x={xAxis.x+7} y={xAxis.y}>x</text><text x={yAxis.x+7} y={yAxis.y}>y</text><text x={zAxis.x+7} y={zAxis.y}>z</text>
+      {showLabels&&<>
+        <text x={xAxis.x+7} y={xAxis.y}>x</text><text x={yAxis.x+7} y={yAxis.y}>y</text><text x={zAxis.x+7} y={zAxis.y}>z</text>
+        {xTicks.map(v=>{const p=project(v,0,0);return <g key={'xt'+v}><circle cx={p.x} cy={p.y} r="2" className="surface-tick"/><text x={p.x+5} y={p.y-5} className="surface-tick-label">{v}</text></g>})}
+        {yTicks.map(v=>{const p=project(0,v,0);return <g key={'yt'+v}><circle cx={p.x} cy={p.y} r="2" className="surface-tick"/><text x={p.x+5} y={p.y-5} className="surface-tick-label">{v}</text></g>})}
+        {zTicks.map(v=>{const p=project(0,0,v);return <g key={'zt'+v}><circle cx={p.x} cy={p.y} r="2" className="surface-tick"/><text x={p.x+5} y={p.y-5} className="surface-tick-label">{v}</text></g>})}
+      </>}
       <circle cx={point.x} cy={point.y} r="7" className="surface-point"/>
       <circle cx={point.x} cy={point.y} r="13" className="surface-point-ring"/>
       <text x={point.x+13} y={point.y-12} className="surface-point-label">{pointLabel}</text>
     </svg>
     <div className="surface3d-hint">↔ {pointLabel.includes('Точка')?'тащи — вращение · колесо/трекпад — масштаб':'drag to rotate · wheel/trackpad to zoom'}</div>
+    <div className="surface-label-toggle">
+      <span>{pointLabel.includes('Точка')?'Подписи осей':'Axis labels'}</span>
+      <button type="button" className={showLabels?'on':''} aria-pressed={showLabels} onClick={()=>setShowLabels(v=>!v)}><i/></button>
+    </div>
     <div className="surface-controls">
       <button type="button" onClick={()=>setZoom(z=>Math.max(.55,z/1.18))}>−</button>
       <span>{Math.round(zoom*100)}%</span>
