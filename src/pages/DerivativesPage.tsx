@@ -157,7 +157,9 @@ function GradientDescent3D({trajectory,currentStep}:{trajectory:GdPoint[];curren
   const [pitch,setPitch]=useState(.62);
   const [zoom,setZoom]=useState(1);
   const drag=useRef<{x:number;y:number;yaw:number;pitch:number}|null>(null);
-  const extent=2.5,zScale=.28;
+  const maxAbs=Math.max(2.5,...trajectory.map(p=>Math.max(Math.abs(p.x),Math.abs(p.y))));
+  const extent=Math.min(18,maxAbs*1.15);
+  const zScale=3.5/(2*extent*extent);
   const project=(x:number,y:number,z:number)=>{
     const zs=z*zScale,cy=Math.cos(yaw),sy=Math.sin(yaw);
     const x1=x*cy-y*sy,y1=x*sy+y*cy,cp=Math.cos(pitch),sp=Math.sin(pitch);
@@ -216,10 +218,13 @@ function GradientDescent3D({trajectory,currentStep}:{trajectory:GdPoint[];curren
 }
 
 function GradientDescentContour({trajectory,currentStep}:{trajectory:GdPoint[];currentStep:number}){
-  const W=620,H=420,P=38,min=-2.5,max=2.5;
+  const W=620,H=420,P=38;
+  const maxAbs=Math.max(2.5,...trajectory.map(p=>Math.max(Math.abs(p.x),Math.abs(p.y))));
+  const bound=Math.min(18,maxAbs*1.15),min=-bound,max=bound;
   const sx=(x:number)=>P+(x-min)/(max-min)*(W-P*2);
   const sy=(y:number)=>H-P-(y-min)/(max-min)*(H-P*2);
-  const levels=[.25,.5,1,2,3,4,5,6];
+  const maxLevel=bound*bound;
+  const levels=[.04,.1,.2,.35,.55,.8].map(k=>Math.max(.25,maxLevel*k));
   const active=trajectory.slice(0,currentStep+1);
   const current=trajectory[Math.min(currentStep,trajectory.length-1)];
   return <svg className="gd-contour" viewBox={`0 0 ${W} ${H}`}>
@@ -303,6 +308,20 @@ export function DerivativesPage(){
     return points;
   },[gdLearningRate,gdSteps]);
   const gdCurrent=gdTrajectory[Math.min(gdStep,gdTrajectory.length-1)];
+  const gdMultiplier=1-2*gdLearningRate;
+  const gdDistance=Math.hypot(gdCurrent.x,gdCurrent.y);
+  const gdStatus=
+    Math.abs(gdLearningRate-.5)<.005?'perfect':
+    Math.abs(gdLearningRate-1)<.005?'border':
+    gdLearningRate>1?'diverge':
+    gdLearningRate>.5?'overshoot':'smooth';
+  const gdStatusLabel={
+    smooth:t('Smooth convergence'),
+    perfect:t('One-step jump to the minimum'),
+    overshoot:t('Overshooting, but still convergent'),
+    border:t('Oscillates without convergence'),
+    diverge:t('Divergent')
+  }[gdStatus];
   useEffect(()=>{setGdStep(0);setGdPlaying(false)},[gdLearningRate,gdSteps]);
   useEffect(()=>{
     if(!gdPlaying)return;
@@ -549,12 +568,27 @@ export function DerivativesPage(){
       </div>
 
       <div className="gd-controls panel">
-        <label><span>{t('Learning rate')}</span><input type="range" min=".02" max=".45" step=".01" value={gdLearningRate} onChange={e=>setGdLearningRate(+e.target.value)}/><b>{gdLearningRate.toFixed(2)}</b></label>
+        <label><span>{t('Learning rate')}</span><input className={`gd-lr-slider ${gdLearningRate>1?'danger':gdLearningRate>.5?'warning':gdLearningRate===.5?'perfect':'safe'}`} type="range" min=".02" max="1.20" step=".01" value={gdLearningRate} onChange={e=>setGdLearningRate(+e.target.value)}/><b>{gdLearningRate.toFixed(2)}</b></label>
         <label><span>{t('Steps')}</span><input type="range" min="3" max="25" step="1" value={gdSteps} onChange={e=>setGdSteps(+e.target.value)}/><b>{gdSteps}</b></label>
         <div className="gd-actions">
           <button onClick={()=>setGdPlaying(v=>!v)}>{gdPlaying?t('Pause'):t('Run visualization')}</button>
           <button onClick={()=>{setGdPlaying(false);setGdStep(s=>Math.min(s+1,gdTrajectory.length-1))}}>{t('Step forward')}</button>
           <button onClick={()=>{setGdPlaying(false);setGdStep(0)}}>{t('Reset')}</button>
+        </div>
+      </div>
+
+      <div className="gd-lr-insight panel">
+        <div className="gd-presets">
+          {[.1,.5,.9,1.1].map(v=><button key={v} className={Math.abs(gdLearningRate-v)<.005?'active':''} onClick={()=>setGdLearningRate(v)}>η = {v.toFixed(1)}</button>)}
+        </div>
+        <div className={`gd-status ${gdStatus}`}>
+          <span>{t('Current regime')}</span>
+          <b>{gdStatusLabel}</b>
+        </div>
+        <div className="gd-multiplier">
+          <span>{t('Update multiplier')}</span>
+          <b>1 − 2η = {gdMultiplier.toFixed(2)}</b>
+          <small>xₙ₊₁ = {gdMultiplier.toFixed(2)}xₙ · yₙ₊₁ = {gdMultiplier.toFixed(2)}yₙ</small>
         </div>
       </div>
 
@@ -565,7 +599,7 @@ export function DerivativesPage(){
         <span>loss <b>{gdCurrent.z.toFixed(3)}</b></span>
         <span>∂L/∂x <b>{gdCurrent.gx.toFixed(3)}</b></span>
         <span>∂L/∂y <b>{gdCurrent.gy.toFixed(3)}</b></span>
-        <strong>∇L = ({gdCurrent.gx.toFixed(2)}, {gdCurrent.gy.toFixed(2)})</strong>
+        <strong>∇L = ({gdCurrent.gx.toFixed(2)}, {gdCurrent.gy.toFixed(2)}) · d = {gdDistance.toFixed(2)}</strong>
       </div>
 
       <div className="gd-visual-grid">
@@ -589,14 +623,15 @@ export function DerivativesPage(){
         <section className="panel gd-explain">
           <span className="gradient-step">02</span>
           <h3>{t('What does learning rate control?')}</h3>
-          <p>{t('Learning rate η controls how much of the gradient we use in one update. Small η gives cautious steps. Larger η gives bigger jumps and can overshoot if it is too large.')}</p>
-          <div className="gd-note">η = {gdLearningRate.toFixed(2)} → xnew = {(1-2*gdLearningRate).toFixed(2)}x, ynew = {(1-2*gdLearningRate).toFixed(2)}y</div>
+          <p>{t('Learning rate η controls how much of the gradient we use in one update. A large step is not automatically bad: the key question is whether each jump gets smaller or larger.')}</p>
+          <div className={`gd-note ${gdStatus}`}>η = {gdLearningRate.toFixed(2)} → 1 − 2η = {gdMultiplier.toFixed(2)}</div>
+          <p className="gd-condition">|1 − 2η| {Math.abs(gdMultiplier)<1?'<':'≥'} 1 → {gdStatusLabel}</p>
         </section>
       </div>
 
       <section className="gradient-summary panel gd-summary">
         <b>{t('What to notice')}</b>
-        <p>{t('With η=0.1 both x and y are multiplied by 0.8 on every step. Their ratio stays the same, so from (1,2) the path is a straight line y=2x toward (0,0). As we get closer to zero, the gradient becomes smaller, so the updates also become smaller.')}</p>
+        <p>{t('For this quadratic bowl, the important number is |1−2η|. If it is below 1, every jump is smaller than the previous one and we converge. If it is above 1, every jump is larger and we diverge. Crossing the minimum is fine — growing oscillations are the real problem.')}</p>
       </section>
 
       <section className="gd-table panel">
