@@ -62,14 +62,8 @@ function Surface3D({pointLabel,fn,pointValue,extent,zAxisMax,zScale}:{pointLabel
   const zTicks=[0,.25,.5,.75,1].map(v=>Math.round(v*zAxisMax));
   return <div className="surface3d-wrap">
     <svg className="surface3d" viewBox="0 0 720 470"
-      onPointerDown={e=>{(e.currentTarget as SVGSVGElement).setPointerCapture(e.pointerId);drag.current={x:e.clientX,y:e.clientY}}}
-      onPointerMove={e=>{
-        if(!drag.current)return;
-        const dx=e.clientX-drag.current.x,dy=e.clientY-drag.current.y;
-        drag.current={x:e.clientX,y:e.clientY};
-        setYaw(v=>v+dx*.012);
-        setPitch(v=>v+dy*.012);
-      }}
+      onPointerDown={e=>{(e.currentTarget as SVGSVGElement).setPointerCapture(e.pointerId);drag.current={x:e.clientX,y:e.clientY,yaw,pitch}}}
+      onPointerMove={e=>{if(!drag.current)return;setYaw(drag.current.yaw+(e.clientX-drag.current.x)*.01);setPitch(drag.current.pitch+(e.clientY-drag.current.y)*.01)}}
       onPointerUp={()=>{drag.current=null}} onPointerCancel={()=>{drag.current=null}}
       onWheel={e=>{e.preventDefault();setZoom(z=>Math.max(.55,Math.min(2.6,z*(e.deltaY<0?1.1:.9))))}}>
       <rect x="0" y="0" width="720" height="470" className="surface-bg"/>
@@ -337,8 +331,14 @@ function RegressionLoss3D({trajectory,currentStep,olsB0,olsB1}:{trajectory:RegSt
   const mseTicks=[0,5,10,15,20,25,30];
   return <div className="reg-loss3d-wrap">
     <svg className="reg-loss3d" viewBox="0 0 720 470"
-      onPointerDown={e=>{(e.currentTarget as SVGSVGElement).setPointerCapture(e.pointerId);drag.current={x:e.clientX,y:e.clientY,yaw,pitch}}}
-      onPointerMove={e=>{if(!drag.current)return;setYaw(drag.current.yaw+(e.clientX-drag.current.x)*.01);setPitch(drag.current.pitch+(e.clientY-drag.current.y)*.01)}}
+      onPointerDown={e=>{(e.currentTarget as SVGSVGElement).setPointerCapture(e.pointerId);drag.current={x:e.clientX,y:e.clientY}}}
+      onPointerMove={e=>{
+        if(!drag.current)return;
+        const dx=e.clientX-drag.current.x,dy=e.clientY-drag.current.y;
+        drag.current={x:e.clientX,y:e.clientY};
+        setYaw(v=>v+dx*.012);
+        setPitch(v=>v+dy*.012);
+      }}
       onPointerUp={()=>{drag.current=null}} onPointerCancel={()=>{drag.current=null}}
       onWheel={e=>{e.preventDefault();setZoom(z=>Math.max(.6,Math.min(2.4,z*(e.deltaY<0?1.1:.9))))}}>
       <rect width="720" height="470" className="surface-bg"/>
