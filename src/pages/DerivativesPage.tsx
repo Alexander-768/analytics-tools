@@ -170,10 +170,14 @@ function GradientDescent3D({trajectory,currentStep}:{trajectory:GdPoint[];curren
     const x=alongX?v:fixed,y=alongX?fixed:v,z=x*x+y*y;
     return project(x,y,z);
   });
-  const projected=trajectory.map(p=>({...project(p.x,p.y,p.z),...p}));
+  const projected=trajectory.map(p=>({...p,screen:project(p.x,p.y,p.z)}));
   const active=projected.slice(0,currentStep+1);
   const current=projected[Math.min(currentStep,projected.length-1)];
   const origin=project(0,0,0);
+  const xAxis=project(extent*1.1,0,0);
+  const yAxis=project(0,extent*1.1,0);
+  const zAxis=project(0,0,7);
+  const ticks=[-2,-1,0,1,2];
   return <div className="gd3d-wrap">
     <svg className="gd3d" viewBox="0 0 720 470"
       onPointerDown={e=>{(e.currentTarget as SVGSVGElement).setPointerCapture(e.pointerId);drag.current={x:e.clientX,y:e.clientY,yaw,pitch}}}
@@ -183,12 +187,23 @@ function GradientDescent3D({trajectory,currentStep}:{trajectory:GdPoint[];curren
       <rect width="720" height="470" className="surface-bg"/>
       {grid.map(v=><polyline key={'gdx'+v} points={linePoints(v,true).map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')} className="surface-line xline"/>)}
       {grid.map(v=><polyline key={'gdy'+v} points={linePoints(v,false).map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')} className="surface-line yline"/>)}
-      <polyline points={projected.map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')} className="gd-path ghost"/>
-      <polyline points={active.map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')} className="gd-path active"/>
-      {projected.map((p,i)=><circle key={i} cx={p.x} cy={p.y} r={i===currentStep?6:3} className={i<=currentStep?'gd-step-dot active':'gd-step-dot'}/>)}
+      <line x1={origin.x} y1={origin.y} x2={xAxis.x} y2={xAxis.y} className="surface-axis"/>
+      <line x1={origin.x} y1={origin.y} x2={yAxis.x} y2={yAxis.y} className="surface-axis"/>
+      <line x1={origin.x} y1={origin.y} x2={zAxis.x} y2={zAxis.y} className="surface-axis"/>
+      <text x={xAxis.x+7} y={xAxis.y} className="gd-axis-label">x</text>
+      <text x={yAxis.x+7} y={yAxis.y} className="gd-axis-label">y</text>
+      <text x={zAxis.x+7} y={zAxis.y} className="gd-axis-label">z</text>
+      {ticks.map(v=>{const px=project(v,0,0),py=project(0,v,0);return <g key={'gdt'+v}>
+        <circle cx={px.x} cy={px.y} r="2" className="surface-tick"/><text x={px.x+5} y={px.y-5} className="surface-tick-label">{v}</text>
+        {v!==0&&<><circle cx={py.x} cy={py.y} r="2" className="surface-tick"/><text x={py.x+5} y={py.y-5} className="surface-tick-label">{v}</text></>}
+      </g>})}
+      {[0,2,4,6].map(v=>{const pz=project(0,0,v);return <g key={'gdzt'+v}><circle cx={pz.x} cy={pz.y} r="2" className="surface-tick"/><text x={pz.x+5} y={pz.y-5} className="surface-tick-label">{v}</text></g>})}
+      <polyline points={projected.map(p=>`${p.screen.x.toFixed(1)},${p.screen.y.toFixed(1)}`).join(' ')} className="gd-path ghost"/>
+      <polyline points={active.map(p=>`${p.screen.x.toFixed(1)},${p.screen.y.toFixed(1)}`).join(' ')} className="gd-path active"/>
+      {projected.map((p,i)=><circle key={i} cx={p.screen.x} cy={p.screen.y} r={i===currentStep?6:3} className={i<=currentStep?'gd-step-dot active':'gd-step-dot'}/>)}
       <circle cx={origin.x} cy={origin.y} r="5" className="gd-minimum"/>
       <text x={origin.x+8} y={origin.y-8} className="gd-label">min (0,0,0)</text>
-      {current&&<><circle cx={current.x} cy={current.y} r="10" className="gd-current-ring"/><text x={current.x+12} y={current.y-12} className="gd-current-label">step {current.step}</text></>}
+      {current&&<><circle cx={current.screen.x} cy={current.screen.y} r="10" className="gd-current-ring"/><text x={current.screen.x+12} y={current.screen.y-12} className="gd-current-label">step {current.step}</text></>}
     </svg>
     <div className="surface3d-hint">↔ drag to rotate · wheel/trackpad to zoom</div>
     <div className="surface-controls">
