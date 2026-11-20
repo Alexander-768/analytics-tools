@@ -242,6 +242,53 @@ function GradientDescentContour({trajectory,currentStep}:{trajectory:GdPoint[];c
   </svg>;
 }
 
+
+type RegStep={step:number;b0:number;b1:number;mse:number;rss:number;g0:number;g1:number};
+
+function RegressionFitPlot({b0,b1,olsB0,olsB1}:{b0:number;b1:number;olsB0:number;olsB1:number}){
+  const W=620,H=400,P=44,xmin=.5,xmax=3.5,ymin=0,ymax=6;
+  const sx=(x:number)=>P+(x-xmin)/(xmax-xmin)*(W-P*2);
+  const sy=(y:number)=>H-P-(y-ymin)/(ymax-ymin)*(H-P*2);
+  const data=[{x:1,y:2},{x:2,y:4},{x:3,y:5}];
+  const line=(bb0:number,bb1:number)=>({x1:sx(xmin),y1:sy(bb0+bb1*xmin),x2:sx(xmax),y2:sy(bb0+bb1*xmax)});
+  const cur=line(b0,b1),ols=line(olsB0,olsB1);
+  return <svg className="reg-fit-plot" viewBox={`0 0 ${W} ${H}`}>
+    <rect width={W} height={H} className="gradient-bg"/>
+    {[1,2,3].map(v=><g key={'rx'+v}><line x1={sx(v)} y1={sy(ymin)} x2={sx(v)} y2={sy(ymax)} className="gradient-grid"/><text x={sx(v)-3} y={H-18}>{v}</text></g>)}
+    {[0,1,2,3,4,5,6].map(v=><g key={'ry'+v}><line x1={sx(xmin)} y1={sy(v)} x2={sx(xmax)} y2={sy(v)} className="gradient-grid"/><text x={16} y={sy(v)+3}>{v}</text></g>)}
+    <line x1={sx(xmin)} y1={sy(0)} x2={sx(xmax)} y2={sy(0)} className="gradient-axis"/>
+    <line x1={sx(1)} y1={sy(ymin)} x2={sx(1)} y2={sy(ymax)} className="gradient-axis"/>
+    <line x1={ols.x1} y1={ols.y1} x2={ols.x2} y2={ols.y2} className="reg-ols-line"/>
+    <line x1={cur.x1} y1={cur.y1} x2={cur.x2} y2={cur.y2} className="reg-current-line"/>
+    {data.map((p,i)=><g key={i}><circle cx={sx(p.x)} cy={sy(p.y)} r="6" className="reg-data-point"/><text x={sx(p.x)+8} y={sy(p.y)-8}>({p.x},{p.y})</text></g>)}
+    <text x={W-170} y={28} className="reg-legend-current">current: ŷ={b0.toFixed(2)}+{b1.toFixed(2)}x</text>
+    <text x={W-170} y={44} className="reg-legend-ols">OLS: ŷ={olsB0.toFixed(2)}+{olsB1.toFixed(2)}x</text>
+  </svg>;
+}
+
+function RegressionLossMap({trajectory,currentStep,olsB0,olsB1}:{trajectory:RegStep[];currentStep:number;olsB0:number;olsB1:number}){
+  const W=620,H=400,P=44,b0min=-.4,b0max=1.6,b1min=-.1,b1max=2.2;
+  const sx=(x:number)=>P+(x-b0min)/(b0max-b0min)*(W-P*2);
+  const sy=(y:number)=>H-P-(y-b1min)/(b1max-b1min)*(H-P*2);
+  const active=trajectory.slice(0,currentStep+1);
+  const current=trajectory[Math.min(currentStep,trajectory.length-1)];
+  const angle=-23.74;
+  const levels=[1,1.45,1.9,2.4,2.9];
+  return <svg className="reg-loss-map" viewBox={`0 0 ${W} ${H}`}>
+    <rect width={W} height={H} className="gradient-bg"/>
+    {[-.0,.5,1,1.5].map(v=><g key={'b0'+v}><line x1={sx(v)} y1={sy(b1min)} x2={sx(v)} y2={sy(b1max)} className="gradient-grid"/><text x={sx(v)-8} y={H-18}>{v.toFixed(1)}</text></g>)}
+    {[0,.5,1,1.5,2].map(v=><g key={'b1'+v}><line x1={sx(b0min)} y1={sy(v)} x2={sx(b0max)} y2={sy(v)} className="gradient-grid"/><text x={12} y={sy(v)+3}>{v.toFixed(1)}</text></g>)}
+    <text x={W-28} y={H-18}>b₀</text><text x={16} y={22}>b₁</text>
+    {levels.map((k,i)=><ellipse key={k} cx={sx(olsB0)} cy={sy(olsB1)} rx={32*k} ry={105*k} transform={`rotate(${angle} ${sx(olsB0)} ${sy(olsB1)})`} className={`reg-loss-level l${i}`}/>)}
+    <polyline points={trajectory.map(p=>`${sx(p.b0)},${sy(p.b1)}`).join(' ')} className="reg-param-path ghost"/>
+    <polyline points={active.map(p=>`${sx(p.b0)},${sy(p.b1)}`).join(' ')} className="reg-param-path active"/>
+    {trajectory.map((p,i)=><circle key={i} cx={sx(p.b0)} cy={sy(p.b1)} r={i===currentStep?6:3} className={i<=currentStep?'gd-step-dot active':'gd-step-dot'}/>)}
+    <circle cx={sx(olsB0)} cy={sy(olsB1)} r="6" className="reg-ols-point"/>
+    <text x={sx(olsB0)+9} y={sy(olsB1)-9} className="gd-label">OLS ({olsB0.toFixed(2)}, {olsB1.toFixed(2)})</text>
+    {current&&<text x={sx(current.b0)+9} y={sy(current.b1)+14} className="gd-current-label">step {current.step}</text>}
+  </svg>;
+}
+
 export function DerivativesPage(){
   const {t}=useLanguage();
   const [x0,setX0]=useState(1);
@@ -257,6 +304,11 @@ export function DerivativesPage(){
   const [gdSteps,setGdSteps]=useState(10);
   const [gdStep,setGdStep]=useState(0);
   const [gdPlaying,setGdPlaying]=useState(false);
+  const [regLearningRate,setRegLearningRate]=useState(.05);
+  const [regSteps,setRegSteps]=useState(30);
+  const [regStep,setRegStep]=useState(0);
+  const [regPlaying,setRegPlaying]=useState(false);
+  const [regLossMode,setRegLossMode]=useState<'mse'|'rss'>('mse');
 
   const square=useMemo(()=>sample(x=>x*x,-2.5,2.5),[]);
   const cubic=useMemo(()=>sample(x=>x*x*x-3*x,-2.4,2.4),[]);
@@ -333,6 +385,39 @@ export function DerivativesPage(){
     },650);
     return()=>window.clearInterval(timer);
   },[gdPlaying,gdTrajectory.length]);
+  const regX=[1,2,3],regY=[2,4,5],regN=3;
+  const regMeanX=2,regMeanY=11/3;
+  const regOlsB1=1.5,regOlsB0=2/3;
+  const regTrajectory=useMemo(()=>{
+    const points:RegStep[]=[];
+    let b0=0,b1=0;
+    for(let step=0;step<=regSteps;step++){
+      let rss=0,g0=0,g1=0;
+      for(let i=0;i<regN;i++){
+        const err=(b0+b1*regX[i])-regY[i];
+        rss+=err*err;
+        g0+=2*err/regN;
+        g1+=2*err*regX[i]/regN;
+      }
+      points.push({step,b0,b1,mse:rss/regN,rss,g0,g1});
+      b0-=regLearningRate*g0;
+      b1-=regLearningRate*g1;
+    }
+    return points;
+  },[regLearningRate,regSteps]);
+  const regCurrent=regTrajectory[Math.min(regStep,regTrajectory.length-1)];
+  const regCurrentLoss=regLossMode==='mse'?regCurrent.mse:regCurrent.rss;
+  useEffect(()=>{setRegStep(0);setRegPlaying(false)},[regLearningRate,regSteps,regLossMode]);
+  useEffect(()=>{
+    if(!regPlaying)return;
+    const timer=window.setInterval(()=>{
+      setRegStep(step=>{
+        if(step>=regTrajectory.length-1){setRegPlaying(false);return step}
+        return step+1;
+      });
+    },550);
+    return()=>window.clearInterval(timer);
+  },[regPlaying,regTrajectory.length]);
 
   return <main className="derivatives-page">
     <section className="derivatives-hero">
@@ -643,6 +728,90 @@ export function DerivativesPage(){
         <div className="gd-table-scroll">
           <table><thead><tr><th>step</th><th>x</th><th>y</th><th>loss</th><th>∂L/∂x</th><th>∂L/∂y</th></tr></thead>
           <tbody>{gdTrajectory.map(p=><tr key={p.step} className={p.step===gdStep?'active':''}><td>{p.step}</td><td>{p.x.toFixed(3)}</td><td>{p.y.toFixed(3)}</td><td>{p.z.toFixed(3)}</td><td>{p.gx.toFixed(3)}</td><td>{p.gy.toFixed(3)}</td></tr>)}</tbody></table>
+        </div>
+      </section>
+    </section>
+
+    <section className="reg-gd-section">
+      <div className="deriv-core-banner reg-gd-banner">
+        <span>{t('From optimization to regression')}</span>
+        <strong>{t('Linear regression with Gradient Descent')}</strong>
+        <p>{t('Now the coordinates are not x and y. We move through the model parameters b₀ and b₁ until the regression line reaches the same minimum as OLS.')}</p>
+      </div>
+
+      <div className="deriv-combo-head">
+        <span className="limit-index">08</span>
+        <h2>{t('Fit a line by minimizing squared error')}</h2>
+        <p>{t('Use just three points: (1,2), (2,4), (3,5). Start from b₀=0 and b₁=0, then update both coefficients against the loss gradient.')}</p>
+      </div>
+
+      <div className="reg-data-strip panel">
+        <span>x <b>[1, 2, 3]</b></span>
+        <span>y <b>[2, 4, 5]</b></span>
+        <span>{t('Model')} <b>ŷ = b₀ + b₁x</b></span>
+        <span>{t('OLS target')} <b>b₀={regOlsB0.toFixed(3)}, b₁={regOlsB1.toFixed(3)}</b></span>
+      </div>
+
+      <div className="reg-controls panel">
+        <div className="reg-loss-switch segmented">
+          <button className={regLossMode==='mse'?'active':''} onClick={()=>setRegLossMode('mse')}>MSE</button>
+          <button className={regLossMode==='rss'?'active':''} onClick={()=>setRegLossMode('rss')}>RSS</button>
+        </div>
+        <label><span>{t('Learning rate')}</span><input type="range" min=".005" max=".10" step=".005" value={regLearningRate} onChange={e=>setRegLearningRate(+e.target.value)}/><b>{regLearningRate.toFixed(3)}</b></label>
+        <label><span>{t('Steps')}</span><input type="range" min="5" max="60" step="1" value={regSteps} onChange={e=>setRegSteps(+e.target.value)}/><b>{regSteps}</b></label>
+        <div className="gd-actions">
+          <button onClick={()=>setRegPlaying(v=>!v)}>{regPlaying?t('Pause'):t('Run visualization')}</button>
+          <button onClick={()=>{setRegPlaying(false);setRegStep(s=>Math.min(s+1,regTrajectory.length-1))}}>{t('Step forward')}</button>
+          <button onClick={()=>{setRegPlaying(false);setRegStep(0)}}>{t('Reset')}</button>
+        </div>
+      </div>
+
+      <div className="reg-current panel">
+        <span>{t('Iteration')} <b>{regCurrent.step}</b></span>
+        <span>b₀ <b>{regCurrent.b0.toFixed(3)}</b></span>
+        <span>b₁ <b>{regCurrent.b1.toFixed(3)}</b></span>
+        <span>{regLossMode.toUpperCase()} <b>{regCurrentLoss.toFixed(4)}</b></span>
+        <span>∂L/∂b₀ <b>{regCurrent.g0.toFixed(3)}</b></span>
+        <span>∂L/∂b₁ <b>{regCurrent.g1.toFixed(3)}</b></span>
+      </div>
+
+      <div className="reg-visual-grid">
+        <section className="panel reg-visual">
+          <div className="gradient-visual-head"><span>{t('Data space')}</span><b>{t('How the fitted line changes')}</b></div>
+          <RegressionFitPlot b0={regCurrent.b0} b1={regCurrent.b1} olsB0={regOlsB0} olsB1={regOlsB1}/>
+        </section>
+        <section className="panel reg-visual">
+          <div className="gradient-visual-head"><span>(b₀,b₁)</span><b>{t('Parameter space')}</b></div>
+          <RegressionLossMap trajectory={regTrajectory} currentStep={regStep} olsB0={regOlsB0} olsB1={regOlsB1}/>
+        </section>
+      </div>
+
+      <div className="reg-explain-grid">
+        <section className="panel gd-explain">
+          <span className="gradient-step">01</span>
+          <h3>{t('The parameters are now our coordinates')}</h3>
+          <p>{t('Before, gradient descent moved x and y. Here x and y are fixed data. The things we move are b₀ and b₁ — the intercept and slope of the regression line.')}</p>
+          <div className="gradient-formula">ŷ = b₀ + b₁x</div>
+        </section>
+        <section className="panel gd-explain">
+          <span className="gradient-step">02</span>
+          <h3>{t('The loss tells us how bad the current line is')}</h3>
+          <p>{regLossMode==='mse'?t('MSE is the average squared prediction error. Its gradient tells us how to change b₀ and b₁ to reduce that error.'):t('RSS is the sum of squared prediction errors. It has the same minimum as MSE, so it gives the same OLS coefficients.')}</p>
+          <div className="gradient-formula">{regLossMode==='mse'?'MSE = (1/n) Σ(ŷᵢ−yᵢ)²':'RSS = Σ(ŷᵢ−yᵢ)²'}</div>
+        </section>
+      </div>
+
+      <section className="reg-same-min panel">
+        <b>{t('MSE and RSS give the same coefficients')}</b>
+        <p>{t('MSE = RSS / n. Dividing the whole loss by the positive constant n changes only the vertical scale of the loss surface. The point where the minimum occurs — and therefore b₀ and b₁ — stays exactly the same.')}</p>
+        <div><span>OLS</span><strong>b₀ = {regOlsB0.toFixed(3)}</strong><strong>b₁ = {regOlsB1.toFixed(3)}</strong></div>
+      </section>
+
+      <section className="gd-table panel">
+        <div className="gd-table-head"><b>{t('Gradient descent iterations')}</b><span>{t('Watch b₀ and b₁ approach the OLS solution')}</span></div>
+        <div className="gd-table-scroll">
+          <table><thead><tr><th>step</th><th>b₀</th><th>b₁</th><th>MSE</th><th>RSS</th><th>∂L/∂b₀</th><th>∂L/∂b₁</th></tr></thead>
+          <tbody>{regTrajectory.map(p=><tr key={p.step} className={p.step===regStep?'active':''}><td>{p.step}</td><td>{p.b0.toFixed(3)}</td><td>{p.b1.toFixed(3)}</td><td>{p.mse.toFixed(4)}</td><td>{p.rss.toFixed(4)}</td><td>{p.g0.toFixed(3)}</td><td>{p.g1.toFixed(3)}</td></tr>)}</tbody></table>
         </div>
       </section>
     </section>
