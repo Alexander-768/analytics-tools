@@ -328,6 +328,15 @@ const ru: Record<string,string> = {
   'Gradient descent iterations':'Итерации gradient descent',
   'Watch b₀ and b₁ approach the OLS solution':'Смотри, как b₀ и b₁ приближаются к OLS-решению',
   '3D loss surface':'3D-поверхность loss',
+  'What exactly is MSE here?':'Что именно здесь представляет собой MSE?',
+  'The observed y-values are fixed by the data. Only the model parameters b₀ and b₁ change, so MSE becomes an ordinary function of two variables: L(b₀,b₁).':'Наблюдаемые значения y зафиксированы данными. Меняются только параметры модели b₀ и b₁, поэтому MSE становится обычной функцией двух переменных: L(b₀,b₁).',
+  'General form':'Общий вид',
+  'For our three points':'Для наших трёх точек',
+  'One point in parameter space means one specific regression line.':'Одна точка в пространстве параметров означает одну конкретную регрессионную прямую.',
+  'The height of that point is the average squared error of this line on our three observations.':'Высота этой точки — средняя квадратичная ошибка этой прямой на наших трёх наблюдениях.',
+  'Minimum':'Минимум',
+  'The lowest point on the surface is the pair of coefficients that best fits the data in the least-squares sense.':'Самая низкая точка поверхности — это пара коэффициентов, которая лучше всего описывает данные в смысле метода наименьших квадратов.',
+  'Current point':'Текущая точка',
   'Key idea':'Главная мысль',
   'f″(x₀)<0 does not directly say “the function decreases”. It says the slope f′ is decreasing near x₀. If that decreasing slope is exactly 0 at x₀, then just before x₀ it is positive and just after x₀ it is negative.':'f″(x₀)<0 не говорит напрямую «функция убывает». Это значит, что наклон f′ уменьшается около x₀. Если этот уменьшающийся наклон в x₀ равен 0, то чуть левее он положительный, а чуть правее — отрицательный.'
 };
