@@ -879,6 +879,7 @@ export function DerivativesPage(){
       <section className="panel reg-loss3d-panel">
         <div className="gradient-visual-head"><span>L(b₀,b₁)</span><b>{t('3D loss surface')}</b></div>
         <RegressionLoss3D trajectory={regTrajectory} currentStep={regStep} olsB0={regOlsB0} olsB1={regOlsB1}/>
+        <a className="deriv-action reg-desmos-link" href="https://www.desmos.com/3d/te4lvbzhba?lang=ru" target="_blank" rel="noreferrer">{t('Open this loss surface in Desmos 3D')}</a>
       </section>
 
       <div className="reg-explain-grid">
