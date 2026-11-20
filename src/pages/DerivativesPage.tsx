@@ -626,6 +626,10 @@ export function DerivativesPage(){
           <p>{t('Learning rate η controls how much of the gradient we use in one update. A large step is not automatically bad: the key question is whether each jump gets smaller or larger.')}</p>
           <div className={`gd-note ${gdStatus}`}>η = {gdLearningRate.toFixed(2)} → 1 − 2η = {gdMultiplier.toFixed(2)}</div>
           <p className="gd-condition">|1 − 2η| {Math.abs(gdMultiplier)<1?'<':'≥'} 1 → {gdStatusLabel}</p>
+          <div className="gd-look-note">
+            <b>{t('Look:')}</b>
+            <p>{t('If the step is too large, we can overshoot the local minimum. Sometimes that is okay — if every next overshoot gets smaller. But if the overshoots grow, we may never find the minimum and just fly away in the wrong direction.')}</p>
+          </div>
         </section>
       </div>
 
