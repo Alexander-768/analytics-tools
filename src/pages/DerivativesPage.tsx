@@ -62,8 +62,14 @@ function Surface3D({pointLabel,fn,pointValue,extent,zAxisMax,zScale}:{pointLabel
   const zTicks=[0,.25,.5,.75,1].map(v=>Math.round(v*zAxisMax));
   return <div className="surface3d-wrap">
     <svg className="surface3d" viewBox="0 0 720 470"
-      onPointerDown={e=>{(e.currentTarget as SVGSVGElement).setPointerCapture(e.pointerId);drag.current={x:e.clientX,y:e.clientY,yaw,pitch}}}
-      onPointerMove={e=>{if(!drag.current)return;setYaw(drag.current.yaw+(e.clientX-drag.current.x)*.01);setPitch(drag.current.pitch+(e.clientY-drag.current.y)*.01)}}
+      onPointerDown={e=>{(e.currentTarget as SVGSVGElement).setPointerCapture(e.pointerId);drag.current={x:e.clientX,y:e.clientY}}}
+      onPointerMove={e=>{
+        if(!drag.current)return;
+        const dx=e.clientX-drag.current.x,dy=e.clientY-drag.current.y;
+        drag.current={x:e.clientX,y:e.clientY};
+        setYaw(v=>v+dx*.012);
+        setPitch(v=>v+dy*.012);
+      }}
       onPointerUp={()=>{drag.current=null}} onPointerCancel={()=>{drag.current=null}}
       onWheel={e=>{e.preventDefault();setZoom(z=>Math.max(.55,Math.min(2.6,z*(e.deltaY<0?1.1:.9))))}}>
       <rect x="0" y="0" width="720" height="470" className="surface-bg"/>
@@ -294,7 +300,7 @@ function RegressionLoss3D({trajectory,currentStep,olsB0,olsB1}:{trajectory:RegSt
   const [yaw,setYaw]=useState(-.72);
   const [pitch,setPitch]=useState(.62);
   const [zoom,setZoom]=useState(1);
-  const drag=useRef<{x:number;y:number;yaw:number;pitch:number}|null>(null);
+  const drag=useRef<{x:number;y:number}|null>(null);
   const b0min=-.4,b0max=1.6,b1min=-.1,b1max=2.2;
   const loss=(b0:number,b1:number)=>{
     const xs=[1,2,3],ys=[2,4,5];
@@ -326,6 +332,9 @@ function RegressionLoss3D({trajectory,currentStep,olsB0,olsB1}:{trajectory:RegSt
   const b0Axis=project(b0max,b1min,0);
   const b1Axis=project(b0min,b1max,0);
   const zAxis=project(b0min,b1min,30);
+  const b0Ticks=[-.4,0,.5,1,1.5,1.6];
+  const b1Ticks=[-.1,0,.5,1,1.5,2,2.2];
+  const mseTicks=[0,5,10,15,20,25,30];
   return <div className="reg-loss3d-wrap">
     <svg className="reg-loss3d" viewBox="0 0 720 470"
       onPointerDown={e=>{(e.currentTarget as SVGSVGElement).setPointerCapture(e.pointerId);drag.current={x:e.clientX,y:e.clientY,yaw,pitch}}}
@@ -341,6 +350,18 @@ function RegressionLoss3D({trajectory,currentStep,olsB0,olsB1}:{trajectory:RegSt
       <text x={b0Axis.x+7} y={b0Axis.y} className="gd-axis-label">b₀</text>
       <text x={b1Axis.x+7} y={b1Axis.y} className="gd-axis-label">b₁</text>
       <text x={zAxis.x+7} y={zAxis.y} className="gd-axis-label">MSE</text>
+      {b0Ticks.map(v=>{const p=project(v,b1min,0);return <g key={'rb0tick'+v}>
+        <circle cx={p.x} cy={p.y} r="2" className="surface-tick"/>
+        <text x={p.x+5} y={p.y-5} className="surface-tick-label">{v.toFixed(1)}</text>
+      </g>})}
+      {b1Ticks.map(v=>{const p=project(b0min,v,0);return <g key={'rb1tick'+v}>
+        <circle cx={p.x} cy={p.y} r="2" className="surface-tick"/>
+        <text x={p.x+5} y={p.y-5} className="surface-tick-label">{v.toFixed(1)}</text>
+      </g>})}
+      {mseTicks.map(v=>{const p=project(b0min,b1min,v);return <g key={'rmsetick'+v}>
+        <circle cx={p.x} cy={p.y} r="2" className="surface-tick"/>
+        <text x={p.x+5} y={p.y-5} className="surface-tick-label">{v}</text>
+      </g>})}
       <polyline points={points.map(p=>`${p.screen.x.toFixed(1)},${p.screen.y.toFixed(1)}`).join(' ')} className="reg-3d-path ghost"/>
       <polyline points={active.map(p=>`${p.screen.x.toFixed(1)},${p.screen.y.toFixed(1)}`).join(' ')} className="reg-3d-path active"/>
       {points.map((p,i)=><circle key={i} cx={p.screen.x} cy={p.screen.y} r={i===currentStep?6:3} className={i<=currentStep?'gd-step-dot active':'gd-step-dot'}/>)}
