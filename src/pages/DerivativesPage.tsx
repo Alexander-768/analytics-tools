@@ -896,6 +896,48 @@ export function DerivativesPage(){
         </section>
       </div>
 
+      <section className="reg-loss-meaning panel">
+        <div className="reg-loss-meaning-head">
+          <span className="gradient-step">03</span>
+          <div>
+            <b>{t('What exactly is MSE here?')}</b>
+            <p>{t('The observed y-values are fixed by the data. Only the model parameters b₀ and b₁ change, so MSE becomes an ordinary function of two variables: L(b₀,b₁).')}</p>
+          </div>
+        </div>
+
+        <div className="reg-loss-formulas">
+          <div>
+            <span>{t('General form')}</span>
+            <code>L(b₀,b₁) = (1/n) Σ [yᵢ − (b₀ + b₁xᵢ)]²</code>
+          </div>
+          <div>
+            <span>{t('For our three points')}</span>
+            <code>L(b₀,b₁) = ⅓[(2−(b₀+b₁))² + (4−(b₀+2b₁))² + (5−(b₀+3b₁))²]</code>
+          </div>
+        </div>
+
+        <div className="reg-loss-interpretation">
+          <article>
+            <b>(b₀,b₁)</b>
+            <p>{t('One point in parameter space means one specific regression line.')}</p>
+          </article>
+          <article>
+            <b>MSE</b>
+            <p>{t('The height of that point is the average squared error of this line on our three observations.')}</p>
+          </article>
+          <article>
+            <b>{t('Minimum')}</b>
+            <p>{t('The lowest point on the surface is the pair of coefficients that best fits the data in the least-squares sense.')}</p>
+          </article>
+        </div>
+
+        <div className="reg-loss-live">
+          <span>{t('Current point')}</span>
+          <b>(b₀,b₁) = ({regCurrent.b0.toFixed(3)}, {regCurrent.b1.toFixed(3)})</b>
+          <strong>MSE = {regCurrent.mse.toFixed(4)}</strong>
+        </div>
+      </section>
+
       <section className="reg-same-min panel">
         <b>{t('MSE and RSS give the same coefficients')}</b>
         <p>{t('MSE = RSS / n. Dividing the whole loss by the positive constant n changes only the vertical scale of the loss surface. The point where the minimum occurs — and therefore b₀ and b₁ — stays exactly the same.')}</p>
