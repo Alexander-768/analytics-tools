@@ -327,6 +327,7 @@ const ru: Record<string,string> = {
   'MSE = RSS / n. Dividing the whole loss by the positive constant n changes only the vertical scale of the loss surface. The point where the minimum occurs — and therefore b₀ and b₁ — stays exactly the same.':'MSE = RSS / n. Деление всей функции потерь на положительную константу n меняет только вертикальный масштаб loss-поверхности. Точка минимума — а значит b₀ и b₁ — остаётся точно той же.',
   'Gradient descent iterations':'Итерации gradient descent',
   'Watch b₀ and b₁ approach the OLS solution':'Смотри, как b₀ и b₁ приближаются к OLS-решению',
+  '3D loss surface':'3D-поверхность loss',
   'Key idea':'Главная мысль',
   'f″(x₀)<0 does not directly say “the function decreases”. It says the slope f′ is decreasing near x₀. If that decreasing slope is exactly 0 at x₀, then just before x₀ it is positive and just after x₀ it is negative.':'f″(x₀)<0 не говорит напрямую «функция убывает». Это значит, что наклон f′ уменьшается около x₀. Если этот уменьшающийся наклон в x₀ равен 0, то чуть левее он положительный, а чуть правее — отрицательный.'
 };
