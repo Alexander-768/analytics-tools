@@ -149,6 +149,79 @@ function DirectionDerivativePlot({angle}:{angle:number}){
   </svg>;
 }
 
+
+type GdPoint={step:number;x:number;y:number;z:number;gx:number;gy:number};
+
+function GradientDescent3D({trajectory,currentStep}:{trajectory:GdPoint[];currentStep:number}){
+  const [yaw,setYaw]=useState(-.72);
+  const [pitch,setPitch]=useState(.62);
+  const [zoom,setZoom]=useState(1);
+  const drag=useRef<{x:number;y:number;yaw:number;pitch:number}|null>(null);
+  const extent=2.5,zScale=.28;
+  const project=(x:number,y:number,z:number)=>{
+    const zs=z*zScale,cy=Math.cos(yaw),sy=Math.sin(yaw);
+    const x1=x*cy-y*sy,y1=x*sy+y*cy,cp=Math.cos(pitch),sp=Math.sin(pitch);
+    const y2=y1*cp-zs*sp,z2=y1*sp+zs*cp;
+    return {x:360+x1*72*zoom,y:235-y2*72*zoom,depth:z2};
+  };
+  const grid=Array.from({length:11},(_,i)=>-extent+i*(2*extent/10));
+  const linePoints=(fixed:number,alongX:boolean)=>Array.from({length:41},(_,i)=>{
+    const v=-extent+i*(2*extent)/40;
+    const x=alongX?v:fixed,y=alongX?fixed:v,z=x*x+y*y;
+    return project(x,y,z);
+  });
+  const projected=trajectory.map(p=>({...project(p.x,p.y,p.z),...p}));
+  const active=projected.slice(0,currentStep+1);
+  const current=projected[Math.min(currentStep,projected.length-1)];
+  const origin=project(0,0,0);
+  return <div className="gd3d-wrap">
+    <svg className="gd3d" viewBox="0 0 720 470"
+      onPointerDown={e=>{(e.currentTarget as SVGSVGElement).setPointerCapture(e.pointerId);drag.current={x:e.clientX,y:e.clientY,yaw,pitch}}}
+      onPointerMove={e=>{if(!drag.current)return;setYaw(drag.current.yaw+(e.clientX-drag.current.x)*.01);setPitch(drag.current.pitch+(e.clientY-drag.current.y)*.01)}}
+      onPointerUp={()=>{drag.current=null}} onPointerCancel={()=>{drag.current=null}}
+      onWheel={e=>{e.preventDefault();setZoom(z=>Math.max(.6,Math.min(2.4,z*(e.deltaY<0?1.1:.9))))}}>
+      <rect width="720" height="470" className="surface-bg"/>
+      {grid.map(v=><polyline key={'gdx'+v} points={linePoints(v,true).map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')} className="surface-line xline"/>)}
+      {grid.map(v=><polyline key={'gdy'+v} points={linePoints(v,false).map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')} className="surface-line yline"/>)}
+      <polyline points={projected.map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')} className="gd-path ghost"/>
+      <polyline points={active.map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')} className="gd-path active"/>
+      {projected.map((p,i)=><circle key={i} cx={p.x} cy={p.y} r={i===currentStep?6:3} className={i<=currentStep?'gd-step-dot active':'gd-step-dot'}/>)}
+      <circle cx={origin.x} cy={origin.y} r="5" className="gd-minimum"/>
+      <text x={origin.x+8} y={origin.y-8} className="gd-label">min (0,0,0)</text>
+      {current&&<><circle cx={current.x} cy={current.y} r="10" className="gd-current-ring"/><text x={current.x+12} y={current.y-12} className="gd-current-label">step {current.step}</text></>}
+    </svg>
+    <div className="surface3d-hint">↔ drag to rotate · wheel/trackpad to zoom</div>
+    <div className="surface-controls">
+      <button type="button" onClick={()=>setZoom(z=>Math.max(.6,z/1.18))}>−</button>
+      <span>{Math.round(zoom*100)}%</span>
+      <button type="button" onClick={()=>setZoom(z=>Math.min(2.4,z*1.18))}>+</button>
+      <button type="button" className="surface-reset" onClick={()=>{setYaw(-.72);setPitch(.62);setZoom(1)}}>↺</button>
+    </div>
+  </div>;
+}
+
+function GradientDescentContour({trajectory,currentStep}:{trajectory:GdPoint[];currentStep:number}){
+  const W=620,H=420,P=38,min=-2.5,max=2.5;
+  const sx=(x:number)=>P+(x-min)/(max-min)*(W-P*2);
+  const sy=(y:number)=>H-P-(y-min)/(max-min)*(H-P*2);
+  const levels=[.25,.5,1,2,3,4,5,6];
+  const active=trajectory.slice(0,currentStep+1);
+  const current=trajectory[Math.min(currentStep,trajectory.length-1)];
+  return <svg className="gd-contour" viewBox={`0 0 ${W} ${H}`}>
+    <rect width={W} height={H} className="gradient-bg"/>
+    {[-2,-1,0,1,2].map(v=><g key={'cx'+v}><line x1={sx(v)} y1={sy(min)} x2={sx(v)} y2={sy(max)} className="gradient-grid"/><line x1={sx(min)} y1={sy(v)} x2={sx(max)} y2={sy(v)} className="gradient-grid"/></g>)}
+    <line x1={sx(min)} y1={sy(0)} x2={sx(max)} y2={sy(0)} className="gradient-axis"/>
+    <line x1={sx(0)} y1={sy(min)} x2={sx(0)} y2={sy(max)} className="gradient-axis"/>
+    {levels.map(c=>{const r=Math.sqrt(c);return <ellipse key={c} cx={sx(0)} cy={sy(0)} rx={Math.abs(sx(r)-sx(0))} ry={Math.abs(sy(r)-sy(0))} className="gradient-level"/>})}
+    <polyline points={trajectory.map(p=>`${sx(p.x)},${sy(p.y)}`).join(' ')} className="gd-contour-path ghost"/>
+    <polyline points={active.map(p=>`${sx(p.x)},${sy(p.y)}`).join(' ')} className="gd-contour-path active"/>
+    {trajectory.map((p,i)=><circle key={i} cx={sx(p.x)} cy={sy(p.y)} r={i===currentStep?6:3} className={i<=currentStep?'gd-step-dot active':'gd-step-dot'}/>)}
+    <circle cx={sx(0)} cy={sy(0)} r="5" className="gd-minimum"/>
+    <text x={sx(0)+7} y={sy(0)-8} className="gd-label">(0,0)</text>
+    {current&&<text x={sx(current.x)+9} y={sy(current.y)-9} className="gd-current-label">({current.x.toFixed(2)}, {current.y.toFixed(2)})</text>}
+  </svg>;
+}
+
 export function DerivativesPage(){
   const {t}=useLanguage();
   const [x0,setX0]=useState(1);
@@ -160,6 +233,10 @@ export function DerivativesPage(){
   const [gradientMode,setGradientMode]=useState<'axes'|'gradient'|'sweep'>('axes');
   const [gradientAngle,setGradientAngle]=useState(0);
   const [gradientPlaying,setGradientPlaying]=useState(false);
+  const [gdLearningRate,setGdLearningRate]=useState(.1);
+  const [gdSteps,setGdSteps]=useState(10);
+  const [gdStep,setGdStep]=useState(0);
+  const [gdPlaying,setGdPlaying]=useState(false);
 
   const square=useMemo(()=>sample(x=>x*x,-2.5,2.5),[]);
   const cubic=useMemo(()=>sample(x=>x*x*x-3*x,-2.4,2.4),[]);
@@ -199,6 +276,29 @@ export function DerivativesPage(){
     frame=requestAnimationFrame(tick);
     return()=>cancelAnimationFrame(frame);
   },[gradientPlaying]);
+  const gdTrajectory=useMemo(()=>{
+    const points:GdPoint[]=[];
+    let x=1,y=2;
+    for(let step=0;step<=gdSteps;step++){
+      const z=x*x+y*y,gx=2*x,gy=2*y;
+      points.push({step,x,y,z,gx,gy});
+      x=x-gdLearningRate*gx;
+      y=y-gdLearningRate*gy;
+    }
+    return points;
+  },[gdLearningRate,gdSteps]);
+  const gdCurrent=gdTrajectory[Math.min(gdStep,gdTrajectory.length-1)];
+  useEffect(()=>{setGdStep(0);setGdPlaying(false)},[gdLearningRate,gdSteps]);
+  useEffect(()=>{
+    if(!gdPlaying)return;
+    const timer=window.setInterval(()=>{
+      setGdStep(step=>{
+        if(step>=gdTrajectory.length-1){setGdPlaying(false);return step}
+        return step+1;
+      });
+    },650);
+    return()=>window.clearInterval(timer);
+  },[gdPlaying,gdTrajectory.length]);
 
   return <main className="derivatives-page">
     <section className="derivatives-hero">
@@ -417,6 +517,79 @@ export function DerivativesPage(){
       <section className="gradient-summary panel">
         <b>{t('Simple intuition')}</b>
         <p>{t('At one point, the partial derivatives are just two local speeds: 12 along x and 4 along y. If only one axis is allowed, x wins. If both are allowed, the best move uses both — in the ratio 12:4. That direction is the gradient.')}</p>
+      </section>
+    </section>
+
+    <section className="gd-section">
+      <div className="deriv-core-banner gd-banner">
+        <span>{t('From gradient to optimization')}</span>
+        <strong>{t('Gradient Descent')}</strong>
+        <p>{t('The gradient points uphill. To minimize a loss function, we move in the opposite direction — step by step.')}</p>
+      </div>
+
+      <div className="deriv-combo-head">
+        <span className="limit-index">07</span>
+        <h2>{t('Walk down the surface to the minimum')}</h2>
+        <p>{t('For L(x,y)=x²+y² we start at (1,2,5). At every iteration we recompute the gradient and take a small step against it.')}</p>
+      </div>
+
+      <div className="gd-controls panel">
+        <label><span>{t('Learning rate')}</span><input type="range" min=".02" max=".45" step=".01" value={gdLearningRate} onChange={e=>setGdLearningRate(+e.target.value)}/><b>{gdLearningRate.toFixed(2)}</b></label>
+        <label><span>{t('Steps')}</span><input type="range" min="3" max="25" step="1" value={gdSteps} onChange={e=>setGdSteps(+e.target.value)}/><b>{gdSteps}</b></label>
+        <div className="gd-actions">
+          <button onClick={()=>setGdPlaying(v=>!v)}>{gdPlaying?t('Pause'):t('Run visualization')}</button>
+          <button onClick={()=>{setGdPlaying(false);setGdStep(s=>Math.min(s+1,gdTrajectory.length-1))}}>{t('Step forward')}</button>
+          <button onClick={()=>{setGdPlaying(false);setGdStep(0)}}>{t('Reset')}</button>
+        </div>
+      </div>
+
+      <div className="gd-current panel">
+        <span>{t('Iteration')} <b>{gdCurrent.step}</b></span>
+        <span>x <b>{gdCurrent.x.toFixed(3)}</b></span>
+        <span>y <b>{gdCurrent.y.toFixed(3)}</b></span>
+        <span>loss <b>{gdCurrent.z.toFixed(3)}</b></span>
+        <span>∂L/∂x <b>{gdCurrent.gx.toFixed(3)}</b></span>
+        <span>∂L/∂y <b>{gdCurrent.gy.toFixed(3)}</b></span>
+        <strong>∇L = ({gdCurrent.gx.toFixed(2)}, {gdCurrent.gy.toFixed(2)})</strong>
+      </div>
+
+      <div className="gd-visual-grid">
+        <section className="gd-visual panel">
+          <div className="gradient-visual-head"><span>L(x,y)=x²+y²</span><b>{t('3D descent')}</b></div>
+          <GradientDescent3D trajectory={gdTrajectory} currentStep={gdStep}/>
+        </section>
+        <section className="gd-visual panel">
+          <div className="gradient-visual-head"><span>x-y</span><b>{t('Top view')}</b></div>
+          <GradientDescentContour trajectory={gdTrajectory} currentStep={gdStep}/>
+        </section>
+      </div>
+
+      <div className="gd-explain-grid">
+        <section className="panel gd-explain">
+          <span className="gradient-step">01</span>
+          <h3>{t('Why do we go against the gradient?')}</h3>
+          <p>{t('The gradient points in the direction of the fastest local increase. But loss is something we want to make smaller. So gradient descent simply flips the direction: move along −∇L.')}</p>
+          <div className="gradient-formula">x ← x − η·2x<br/>y ← y − η·2y</div>
+        </section>
+        <section className="panel gd-explain">
+          <span className="gradient-step">02</span>
+          <h3>{t('What does learning rate control?')}</h3>
+          <p>{t('Learning rate η controls how much of the gradient we use in one update. Small η gives cautious steps. Larger η gives bigger jumps and can overshoot if it is too large.')}</p>
+          <div className="gd-note">η = {gdLearningRate.toFixed(2)} → xnew = {(1-2*gdLearningRate).toFixed(2)}x, ynew = {(1-2*gdLearningRate).toFixed(2)}y</div>
+        </section>
+      </div>
+
+      <section className="gradient-summary panel gd-summary">
+        <b>{t('What to notice')}</b>
+        <p>{t('With η=0.1 both x and y are multiplied by 0.8 on every step. Their ratio stays the same, so from (1,2) the path is a straight line y=2x toward (0,0). As we get closer to zero, the gradient becomes smaller, so the updates also become smaller.')}</p>
+      </section>
+
+      <section className="gd-table panel">
+        <div className="gd-table-head"><b>{t('Iterations')}</b><span>{t('The active row follows the animation')}</span></div>
+        <div className="gd-table-scroll">
+          <table><thead><tr><th>step</th><th>x</th><th>y</th><th>loss</th><th>∂L/∂x</th><th>∂L/∂y</th></tr></thead>
+          <tbody>{gdTrajectory.map(p=><tr key={p.step} className={p.step===gdStep?'active':''}><td>{p.step}</td><td>{p.x.toFixed(3)}</td><td>{p.y.toFixed(3)}</td><td>{p.z.toFixed(3)}</td><td>{p.gx.toFixed(3)}</td><td>{p.gy.toFixed(3)}</td></tr>)}</tbody></table>
+        </div>
       </section>
     </section>
   </main>;
