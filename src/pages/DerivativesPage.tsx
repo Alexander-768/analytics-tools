@@ -289,6 +289,75 @@ function RegressionLossMap({trajectory,currentStep,olsB0,olsB1}:{trajectory:RegS
   </svg>;
 }
 
+
+function RegressionLoss3D({trajectory,currentStep,olsB0,olsB1}:{trajectory:RegStep[];currentStep:number;olsB0:number;olsB1:number}){
+  const [yaw,setYaw]=useState(-.72);
+  const [pitch,setPitch]=useState(.62);
+  const [zoom,setZoom]=useState(1);
+  const drag=useRef<{x:number;y:number;yaw:number;pitch:number}|null>(null);
+  const b0min=-.4,b0max=1.6,b1min=-.1,b1max=2.2;
+  const loss=(b0:number,b1:number)=>{
+    const xs=[1,2,3],ys=[2,4,5];
+    let rss=0;
+    for(let i=0;i<3;i++){const e=b0+b1*xs[i]-ys[i];rss+=e*e}
+    return rss/3;
+  };
+  const zScale=.22;
+  const project=(b0:number,b1:number,z:number)=>{
+    const x=(b0-.6)*2.4,y=(b1-1.05)*2.1,zs=z*zScale;
+    const cy=Math.cos(yaw),sy=Math.sin(yaw);
+    const x1=x*cy-y*sy,y1=x*sy+y*cy,cp=Math.cos(pitch),sp=Math.sin(pitch);
+    const y2=y1*cp-zs*sp,z2=y1*sp+zs*cp;
+    return {x:360+x1*75*zoom,y:230-y2*75*zoom,depth:z2};
+  };
+  const b0Grid=Array.from({length:11},(_,i)=>b0min+i*(b0max-b0min)/10);
+  const b1Grid=Array.from({length:11},(_,i)=>b1min+i*(b1max-b1min)/10);
+  const lineB0=(fixedB1:number)=>Array.from({length:41},(_,i)=>{
+    const b0=b0min+i*(b0max-b0min)/40; return project(b0,fixedB1,loss(b0,fixedB1));
+  });
+  const lineB1=(fixedB0:number)=>Array.from({length:41},(_,i)=>{
+    const b1=b1min+i*(b1max-b1min)/40; return project(fixedB0,b1,loss(fixedB0,b1));
+  });
+  const points=trajectory.map(p=>({...p,screen:project(p.b0,p.b1,p.mse)}));
+  const active=points.slice(0,currentStep+1);
+  const current=points[Math.min(currentStep,points.length-1)];
+  const ols=project(olsB0,olsB1,loss(olsB0,olsB1));
+  const origin=project(b0min,b1min,0);
+  const b0Axis=project(b0max,b1min,0);
+  const b1Axis=project(b0min,b1max,0);
+  const zAxis=project(b0min,b1min,30);
+  return <div className="reg-loss3d-wrap">
+    <svg className="reg-loss3d" viewBox="0 0 720 470"
+      onPointerDown={e=>{(e.currentTarget as SVGSVGElement).setPointerCapture(e.pointerId);drag.current={x:e.clientX,y:e.clientY,yaw,pitch}}}
+      onPointerMove={e=>{if(!drag.current)return;setYaw(drag.current.yaw+(e.clientX-drag.current.x)*.01);setPitch(drag.current.pitch+(e.clientY-drag.current.y)*.01)}}
+      onPointerUp={()=>{drag.current=null}} onPointerCancel={()=>{drag.current=null}}
+      onWheel={e=>{e.preventDefault();setZoom(z=>Math.max(.6,Math.min(2.4,z*(e.deltaY<0?1.1:.9))))}}>
+      <rect width="720" height="470" className="surface-bg"/>
+      {b1Grid.map(v=><polyline key={'rb0'+v} points={lineB0(v).map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')} className="surface-line xline"/>)}
+      {b0Grid.map(v=><polyline key={'rb1'+v} points={lineB1(v).map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')} className="surface-line yline"/>)}
+      <line x1={origin.x} y1={origin.y} x2={b0Axis.x} y2={b0Axis.y} className="surface-axis"/>
+      <line x1={origin.x} y1={origin.y} x2={b1Axis.x} y2={b1Axis.y} className="surface-axis"/>
+      <line x1={origin.x} y1={origin.y} x2={zAxis.x} y2={zAxis.y} className="surface-axis"/>
+      <text x={b0Axis.x+7} y={b0Axis.y} className="gd-axis-label">b₀</text>
+      <text x={b1Axis.x+7} y={b1Axis.y} className="gd-axis-label">b₁</text>
+      <text x={zAxis.x+7} y={zAxis.y} className="gd-axis-label">MSE</text>
+      <polyline points={points.map(p=>`${p.screen.x.toFixed(1)},${p.screen.y.toFixed(1)}`).join(' ')} className="reg-3d-path ghost"/>
+      <polyline points={active.map(p=>`${p.screen.x.toFixed(1)},${p.screen.y.toFixed(1)}`).join(' ')} className="reg-3d-path active"/>
+      {points.map((p,i)=><circle key={i} cx={p.screen.x} cy={p.screen.y} r={i===currentStep?6:3} className={i<=currentStep?'gd-step-dot active':'gd-step-dot'}/>)}
+      <circle cx={ols.x} cy={ols.y} r="6" className="reg-ols-point"/>
+      <text x={ols.x+9} y={ols.y-9} className="gd-label">OLS minimum</text>
+      {current&&<><circle cx={current.screen.x} cy={current.screen.y} r="10" className="gd-current-ring"/><text x={current.screen.x+12} y={current.screen.y-12} className="gd-current-label">step {current.step}</text></>}
+    </svg>
+    <div className="surface3d-hint">↔ drag to rotate · wheel/trackpad to zoom</div>
+    <div className="surface-controls">
+      <button type="button" onClick={()=>setZoom(z=>Math.max(.6,z/1.18))}>−</button>
+      <span>{Math.round(zoom*100)}%</span>
+      <button type="button" onClick={()=>setZoom(z=>Math.min(2.4,z*1.18))}>+</button>
+      <button type="button" className="surface-reset" onClick={()=>{setYaw(-.72);setPitch(.62);setZoom(1)}}>↺</button>
+    </div>
+  </div>;
+}
+
 export function DerivativesPage(){
   const {t}=useLanguage();
   const [x0,setX0]=useState(1);
@@ -785,6 +854,11 @@ export function DerivativesPage(){
           <RegressionLossMap trajectory={regTrajectory} currentStep={regStep} olsB0={regOlsB0} olsB1={regOlsB1}/>
         </section>
       </div>
+
+      <section className="panel reg-loss3d-panel">
+        <div className="gradient-visual-head"><span>L(b₀,b₁)</span><b>{t('3D loss surface')}</b></div>
+        <RegressionLoss3D trajectory={regTrajectory} currentStep={regStep} olsB0={regOlsB0} olsB1={regOlsB1}/>
+      </section>
 
       <div className="reg-explain-grid">
         <section className="panel gd-explain">
