@@ -297,6 +297,15 @@ const ru: Record<string,string> = {
   'With η=0.1 both x and y are multiplied by 0.8 on every step. Their ratio stays the same, so from (1,2) the path is a straight line y=2x toward (0,0). As we get closer to zero, the gradient becomes smaller, so the updates also become smaller.':'При η=0.1 и x, и y на каждом шаге умножаются на 0.8. Их отношение сохраняется, поэтому из точки (1,2) траектория идёт по прямой y=2x к (0,0). Чем ближе мы к нулю, тем меньше становится градиент, поэтому и обновления становятся всё меньше.',
   'Iterations':'Итерации',
   'The active row follows the animation':'Активная строка следует за анимацией',
+  'Smooth convergence':'Плавная сходимость',
+  'One-step jump to the minimum':'Попадание в минимум за один шаг',
+  'Overshooting, but still convergent':'Перелёты через минимум, но сходимость сохраняется',
+  'Oscillates without convergence':'Колеблется без сходимости',
+  'Divergent':'Расходится',
+  'Current regime':'Текущий режим',
+  'Update multiplier':'Множитель обновления',
+  'Learning rate η controls how much of the gradient we use in one update. A large step is not automatically bad: the key question is whether each jump gets smaller or larger.':'Learning rate η определяет размер шага по градиенту. Большой шаг сам по себе не плох: важно, становится ли каждый следующий перелёт меньше или больше.',
+  'For this quadratic bowl, the important number is |1−2η|. If it is below 1, every jump is smaller than the previous one and we converge. If it is above 1, every jump is larger and we diverge. Crossing the minimum is fine — growing oscillations are the real problem.':'Для этой квадратичной чаши главное число — |1−2η|. Если оно меньше 1, каждый следующий перелёт меньше предыдущего и мы сходи́мся. Если больше 1 — перелёты растут и мы расходимся. Сам по себе перелёт через минимум не страшен — проблема в растущих колебаниях.',
   'Key idea':'Главная мысль',
   'f″(x₀)<0 does not directly say “the function decreases”. It says the slope f′ is decreasing near x₀. If that decreasing slope is exactly 0 at x₀, then just before x₀ it is positive and just after x₀ it is negative.':'f″(x₀)<0 не говорит напрямую «функция убывает». Это значит, что наклон f′ уменьшается около x₀. Если этот уменьшающийся наклон в x₀ равен 0, то чуть левее он положительный, а чуть правее — отрицательный.'
 };
