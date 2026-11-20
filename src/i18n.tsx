@@ -337,6 +337,7 @@ const ru: Record<string,string> = {
   'Minimum':'Минимум',
   'The lowest point on the surface is the pair of coefficients that best fits the data in the least-squares sense.':'Самая низкая точка поверхности — это пара коэффициентов, которая лучше всего описывает данные в смысле метода наименьших квадратов.',
   'Current point':'Текущая точка',
+  'Open this loss surface in Desmos 3D':'Открыть эту loss-поверхность в Desmos 3D',
   'Key idea':'Главная мысль',
   'f″(x₀)<0 does not directly say “the function decreases”. It says the slope f′ is decreasing near x₀. If that decreasing slope is exactly 0 at x₀, then just before x₀ it is positive and just after x₀ it is negative.':'f″(x₀)<0 не говорит напрямую «функция убывает». Это значит, что наклон f′ уменьшается около x₀. Если этот уменьшающийся наклон в x₀ равен 0, то чуть левее он положительный, а чуть правее — отрицательный.'
 };
