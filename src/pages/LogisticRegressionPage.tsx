@@ -115,7 +115,10 @@ function LogLoss3D({trajectory,currentStep}:{trajectory:LogStep[];currentStep:nu
   const pts=trajectory.map(p=>({...p,screen:project(p.b0,p.b1,p.loss)}));
   const active=pts.slice(0,currentStep+1),current=pts[Math.min(currentStep,pts.length-1)];
   const min=project(0,.908,calcLoss(0,.908));
-  const origin=project(b0min,b1min,0),xAxis=project(b0max,b1min,0),yAxis=project(b0min,b1max,0),zAxis=project(b0min,b1min,2.2);
+  const origin=project(0,0,0),xAxis=project(b0max,0,0),xAxisNeg=project(b0min,0,0),yAxis=project(0,b1max,0),yAxisNeg=project(0,b1min,0),zAxis=project(0,0,2.2);
+  const b0Ticks=[-2,-1,0,1,2];
+  const b1Ticks=[-1,0,1,2];
+  const lossTicks=[0,.5,1,1.5,2];
   return <div className="reg-loss3d-wrap">
     <svg className="reg-loss3d" viewBox="0 0 720 470"
       onPointerDown={e=>{(e.currentTarget as SVGSVGElement).setPointerCapture(e.pointerId);drag.current={x:e.clientX,y:e.clientY}}}
@@ -125,8 +128,13 @@ function LogLoss3D({trajectory,currentStep}:{trajectory:LogStep[];currentStep:nu
       <rect width="720" height="470" className="surface-bg"/>
       {g1.map(v=><polyline key={'a'+v} points={line0(v).map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')} className="surface-line xline"/>)}
       {g0.map(v=><polyline key={'b'+v} points={line1(v).map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')} className="surface-line yline"/>)}
-      <line x1={origin.x} y1={origin.y} x2={xAxis.x} y2={xAxis.y} className="surface-axis"/><line x1={origin.x} y1={origin.y} x2={yAxis.x} y2={yAxis.y} className="surface-axis"/><line x1={origin.x} y1={origin.y} x2={zAxis.x} y2={zAxis.y} className="surface-axis"/>
+      <line x1={xAxisNeg.x} y1={xAxisNeg.y} x2={xAxis.x} y2={xAxis.y} className="surface-axis"/>
+      <line x1={yAxisNeg.x} y1={yAxisNeg.y} x2={yAxis.x} y2={yAxis.y} className="surface-axis"/>
+      <line x1={origin.x} y1={origin.y} x2={zAxis.x} y2={zAxis.y} className="surface-axis"/>
       <text x={xAxis.x+7} y={xAxis.y} className="gd-axis-label">b₀</text><text x={yAxis.x+7} y={yAxis.y} className="gd-axis-label">b₁</text><text x={zAxis.x+7} y={zAxis.y} className="gd-axis-label">log loss</text>
+      {b0Ticks.map(v=>{const p=project(v,0,0);return <g key={'lb0'+v}><circle cx={p.x} cy={p.y} r="2" className="surface-tick"/><text x={p.x+5} y={p.y-5} className="surface-tick-label">{v}</text></g>})}
+      {b1Ticks.map(v=>{const p=project(0,v,0);return <g key={'lb1'+v}><circle cx={p.x} cy={p.y} r="2" className="surface-tick"/><text x={p.x+5} y={p.y-5} className="surface-tick-label">{v}</text></g>})}
+      {lossTicks.map(v=>{const p=project(0,0,v);return <g key={'lloss'+v}><circle cx={p.x} cy={p.y} r="2" className="surface-tick"/><text x={p.x+5} y={p.y-5} className="surface-tick-label">{v.toFixed(1)}</text></g>})}
       <polyline points={pts.map(p=>`${p.screen.x},${p.screen.y}`).join(' ')} className="reg-3d-path ghost"/><polyline points={active.map(p=>`${p.screen.x},${p.screen.y}`).join(' ')} className="reg-3d-path active"/>
       {pts.map((p,i)=><circle key={i} cx={p.screen.x} cy={p.screen.y} r={i===currentStep?6:2.5} className={i<=currentStep?'gd-step-dot active':'gd-step-dot'}/>)}
       <circle cx={min.x} cy={min.y} r="6" className="reg-ols-point"/><text x={min.x+9} y={min.y-9} className="gd-label">min log loss</text>
