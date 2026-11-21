@@ -295,16 +295,18 @@ function RegressionLoss3D({trajectory,currentStep,olsB0,olsB1}:{trajectory:RegSt
   const [pitch,setPitch]=useState(.62);
   const [zoom,setZoom]=useState(1);
   const drag=useRef<{x:number;y:number}|null>(null);
-  const b0min=-.4,b0max=1.6,b1min=-.1,b1max=2.2;
+  const b0min=0,b0max=2.2,b1min=0,b1max=2.2;
   const loss=(b0:number,b1:number)=>{
     const xs=[1,2,3],ys=[2,4,5];
     let rss=0;
     for(let i=0;i<3;i++){const e=b0+b1*xs[i]-ys[i];rss+=e*e}
     return rss/3;
   };
+  const paramCenter=1.1;
+  const paramScale=2.2;
   const zScale=.22;
   const project=(b0:number,b1:number,z:number)=>{
-    const x=(b0-.6)*2.4,y=(b1-1.05)*2.1,zs=z*zScale;
+    const x=(b0-paramCenter)*paramScale,y=(b1-paramCenter)*paramScale,zs=z*zScale;
     const cy=Math.cos(yaw),sy=Math.sin(yaw);
     const x1=x*cy-y*sy,y1=x*sy+y*cy,cp=Math.cos(pitch),sp=Math.sin(pitch);
     const y2=y1*cp-zs*sp,z2=y1*sp+zs*cp;
@@ -322,12 +324,12 @@ function RegressionLoss3D({trajectory,currentStep,olsB0,olsB1}:{trajectory:RegSt
   const active=points.slice(0,currentStep+1);
   const current=points[Math.min(currentStep,points.length-1)];
   const ols=project(olsB0,olsB1,loss(olsB0,olsB1));
-  const origin=project(b0min,b1min,0);
-  const b0Axis=project(b0max,b1min,0);
-  const b1Axis=project(b0min,b1max,0);
-  const zAxis=project(b0min,b1min,30);
-  const b0Ticks=[-.4,0,.5,1,1.5,1.6];
-  const b1Ticks=[-.1,0,.5,1,1.5,2,2.2];
+  const origin=project(0,0,0);
+  const b0Axis=project(b0max,0,0);
+  const b1Axis=project(0,b1max,0);
+  const zAxis=project(0,0,30);
+  const b0Ticks=[0,.5,1,1.5,2,2.2];
+  const b1Ticks=[0,.5,1,1.5,2,2.2];
   const mseTicks=[0,5,10,15,20,25,30];
   return <div className="reg-loss3d-wrap">
     <svg className="reg-loss3d" viewBox="0 0 720 470"
@@ -350,15 +352,15 @@ function RegressionLoss3D({trajectory,currentStep,olsB0,olsB1}:{trajectory:RegSt
       <text x={b0Axis.x+7} y={b0Axis.y} className="gd-axis-label">b₀</text>
       <text x={b1Axis.x+7} y={b1Axis.y} className="gd-axis-label">b₁</text>
       <text x={zAxis.x+7} y={zAxis.y} className="gd-axis-label">MSE</text>
-      {b0Ticks.map(v=>{const p=project(v,b1min,0);return <g key={'rb0tick'+v}>
+      {b0Ticks.map(v=>{const p=project(v,0,0);return <g key={'rb0tick'+v}>
         <circle cx={p.x} cy={p.y} r="2" className="surface-tick"/>
         <text x={p.x+5} y={p.y-5} className="surface-tick-label">{v.toFixed(1)}</text>
       </g>})}
-      {b1Ticks.map(v=>{const p=project(b0min,v,0);return <g key={'rb1tick'+v}>
+      {b1Ticks.map(v=>{const p=project(0,v,0);return <g key={'rb1tick'+v}>
         <circle cx={p.x} cy={p.y} r="2" className="surface-tick"/>
         <text x={p.x+5} y={p.y-5} className="surface-tick-label">{v.toFixed(1)}</text>
       </g>})}
-      {mseTicks.map(v=>{const p=project(b0min,b1min,v);return <g key={'rmsetick'+v}>
+      {mseTicks.map(v=>{const p=project(0,0,v);return <g key={'rmsetick'+v}>
         <circle cx={p.x} cy={p.y} r="2" className="surface-tick"/>
         <text x={p.x+5} y={p.y-5} className="surface-tick-label">{v}</text>
       </g>})}
