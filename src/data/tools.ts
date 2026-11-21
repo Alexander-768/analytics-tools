@@ -15,6 +15,7 @@ export const tools: Tool[] = [
   { id: 'limits', title: 'Limits', description: 'Build intuition for limits, continuity, one-sided behavior and indeterminate forms through interactive graphs.', category: 'Basic Math', path: '/basic-math/limits', status: 'ready', index: '01' },
   { id: 'derivatives', title: 'Derivatives', description: 'Understand derivatives as limits, local slopes, and the joint behavior of first and second derivatives.', category: 'Basic Math', path: '/basic-math/derivatives', status: 'ready', index: '02' },
   { id: 'gradient-descent-ml', title: 'Gradient Descent & Linear Regression', description: 'Continue from derivatives and gradients into machine learning: loss functions, parameter updates, and fitting a regression with gradient descent.', category: 'Machine Learning', path: '/machine-learning/gradient-descent', status: 'ready', index: '01' },
+  { id: 'logistic-regression', title: 'Logistic Regression', description: 'From maximum likelihood to sigmoid, log loss, and gradient descent over model parameters.', category: 'Machine Learning', path: '/machine-learning/logistic-regression', status: 'ready', index: '02' },
 ];
 
 export type Category = {
