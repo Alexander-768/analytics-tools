@@ -14,6 +14,7 @@ export const tools: Tool[] = [
   { id: 'sample-size', title: 'Sample Size Calculator', description: 'Calculate the required sample size for an A/B test.', category: 'A/B Testing', path: '/ab-testing/sample-size', status: 'ready', index: '01' },
   { id: 'limits', title: 'Limits', description: 'Build intuition for limits, continuity, one-sided behavior and indeterminate forms through interactive graphs.', category: 'Basic Math', path: '/basic-math/limits', status: 'ready', index: '01' },
   { id: 'derivatives', title: 'Derivatives', description: 'Understand derivatives as limits, local slopes, and the joint behavior of first and second derivatives.', category: 'Basic Math', path: '/basic-math/derivatives', status: 'ready', index: '02' },
+  { id: 'gradient-descent-ml', title: 'Gradient Descent & Linear Regression', description: 'Continue from derivatives and gradients into machine learning: loss functions, parameter updates, and fitting a regression with gradient descent.', category: 'Machine Learning', path: '/machine-learning/gradient-descent', status: 'ready', index: '01' },
 ];
 
 export type Category = {
@@ -29,6 +30,7 @@ export const categories: Category[] = [
   { id: 'sql', title: 'SQL', description: 'Interactive visualizations and references for SQL.', path: '/sql', index: '01', tools: tools.filter(tool => tool.category === 'SQL') },
   { id: 'ab-testing', title: 'A/B Testing', description: 'Interactive tools for planning and understanding experiments.', path: '/ab-testing', index: '02', tools: tools.filter(tool => tool.category === 'A/B Testing') },
   { id: 'basic-math', title: 'Basic Math', description: 'Visual, interactive refreshers for the mathematical foundations used in analytics.', path: '/basic-math', index: '03', tools: tools.filter(tool => tool.category === 'Basic Math') },
+  { id: 'machine-learning', title: 'Machine Learning', description: 'Build ML intuition from the math we already know: loss functions, optimization, models, and training.', path: '/machine-learning', index: '04', tools: tools.filter(tool => tool.category === 'Machine Learning') },
 ];
 
 export type ExternalResource = { title: string; description: string; url: string };
