@@ -144,7 +144,7 @@ export function LogisticRegressionPage(){
   const [playing,setPlaying]=useState(false);
 
   const trajectory=useMemo(()=>{
-    const out:LogStep[]=[];let b0=-1.4,b1=-.8;
+    const out:LogStep[]=[];let b0=0,b1=0;
     for(let i=0;i<=steps;i++){
       const loss=calcLoss(b0,b1),{g0,g1}=calcGrad(b0,b1);
       out.push({step:i,b0,b1,loss,g0,g1});
