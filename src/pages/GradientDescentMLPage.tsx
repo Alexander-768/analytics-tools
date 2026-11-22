@@ -116,6 +116,95 @@ function RegressionLoss3D({trajectory,currentStep}:{trajectory:RegStep[];current
   </div>;
 }
 
+
+
+function R2Comparison(){
+  const {t}=useLanguage();
+  const [mode,setMode]=useState<'train'|'test'>('train');
+
+  const train={
+    y:[2,4,5],
+    pred:[13/6,11/3,31/6],
+    mean:11/3
+  };
+  const test={
+    y:[4,5,6],
+    pred:[2,3,4],
+    mean:5
+  };
+  const d=mode==='train'?train:test;
+  const tss=d.y.reduce((sum,y)=>sum+(y-d.mean)**2,0);
+  const rss=d.y.reduce((sum,y,i)=>sum+(y-d.pred[i])**2,0);
+  const r2=1-rss/tss;
+
+  const W=720,H=330,P=54,ymin=1,ymax=6.6;
+  const sx=(i:number)=>P+i*(W-P*2)/(d.y.length-1);
+  const sy=(v:number)=>H-P-(v-ymin)/(ymax-ymin)*(H-P*2);
+
+  return <div className="r2-demo">
+    <div className="r2-toggle panel">
+      <div>
+        <span className="kicker">{t('Same formula, different evaluation sample')}</span>
+        <h3>{t('Train vs test R²')}</h3>
+      </div>
+      <div className="segmented">
+        <button className={mode==='train'?'active':''} onClick={()=>setMode('train')}>Train</button>
+        <button className={mode==='test'?'active':''} onClick={()=>setMode('test')}>Test</button>
+      </div>
+    </div>
+
+    <div className="r2-metrics panel">
+      <span>TSS <b>{tss.toFixed(3)}</b></span>
+      <span>RSS <b>{rss.toFixed(3)}</b></span>
+      <span>R² = 1 − RSS/TSS <b>{r2.toFixed(3)}</b></span>
+      <strong className={r2<0?'negative':''}>{mode==='train'?t('OLS fit on this same sample'):t('Model was fitted elsewhere')}</strong>
+    </div>
+
+    <section className="panel r2-visual">
+      <svg viewBox={`0 0 ${W} ${H}`}>
+        <rect width={W} height={H} className="gradient-bg"/>
+        {[2,3,4,5,6].map(v=><g key={v}><line x1={P} y1={sy(v)} x2={W-P} y2={sy(v)} className="gradient-grid"/><text x={18} y={sy(v)+4}>{v}</text></g>)}
+        <line x1={P} y1={sy(d.mean)} x2={W-P} y2={sy(d.mean)} className="r2-mean-line"/>
+        <text x={W-P-74} y={sy(d.mean)-7} className="r2-label">{t('mean of y')}</text>
+        {d.y.map((y,i)=><g key={i}>
+          <line x1={sx(i)} y1={sy(y)} x2={sx(i)} y2={sy(d.mean)} className="r2-tss-line"/>
+          <line x1={sx(i)+13} y1={sy(y)} x2={sx(i)+13} y2={sy(d.pred[i])} className="r2-rss-line"/>
+          <circle cx={sx(i)} cy={sy(y)} r="6" className="reg-data-point"/>
+          <circle cx={sx(i)+13} cy={sy(d.pred[i])} r="5" className="r2-pred-point"/>
+          <text x={sx(i)-7} y={H-18}>x{i+1}</text>
+        </g>)}
+      </svg>
+      <div className="r2-legend">
+        <span><i className="tss"></i>{t('TSS: distance from fact to the sample mean')}</span>
+        <span><i className="rss"></i>{t('RSS: distance from fact to model prediction')}</span>
+      </div>
+    </section>
+
+    <div className="r2-logic-grid">
+      <article className="panel">
+        <span className="gradient-step">A</span>
+        <b>{t('Why train R² is between 0 and 1')}</b>
+        <p>{t('For OLS with an intercept, the fitted model minimizes RSS on the training sample. The constant-only model ŷ=ȳ is one possible candidate, and its RSS is exactly TSS. Therefore OLS cannot be worse than that candidate: RSS ≤ TSS.')}</p>
+        <code>RSS ≥ 0 · TSS ≥ 0 · RSS ≤ TSS</code>
+        <strong>0 ≤ 1 − RSS/TSS ≤ 1</strong>
+      </article>
+      <article className="panel">
+        <span className="gradient-step">B</span>
+        <b>{t('Why test R² can be negative')}</b>
+        <p>{t('On test data, the coefficients were not chosen to minimize test RSS. The trained model can predict worse than the simple benchmark that always predicts the test-set mean. Then RSS > TSS, so R² becomes negative.')}</p>
+        <code>RSS &gt; TSS</code>
+        <strong>R² = 1 − RSS/TSS &lt; 0</strong>
+      </article>
+    </div>
+
+    <div className="r2-key panel">
+      <b>{t('The important distinction')}</b>
+      <p>{t('This is not really “econometrics R² versus ML R²”. The formula is the same. The difference is in-sample fitting versus out-of-sample evaluation. Train R² for ordinary OLS with an intercept is still bounded below by 0; test R² is not.')}</p>
+      <p>{t('The upper bound 1 remains in both cases because RSS cannot be negative. The best possible case is RSS=0, which gives R²=1.')}</p>
+    </div>
+  </div>;
+}
+
 export function GradientDescentMLPage(){
   const {t}=useLanguage();
   const [lr,setLr]=useState(.1);
@@ -182,6 +271,13 @@ export function GradientDescentMLPage(){
         <div className="reg-loss-meaning-head"><span className="gradient-step">03</span><div><b>{t('This is where ML begins conceptually')}</b><p>{t('The dataset stays fixed. The model parameters move. The loss measures how bad the current parameters are, and gradient descent tells us how to update them. Training is just repeating this loop.')}</p></div></div>
         <div className="reg-loss-formulas"><div><span>{t('Model')}</span><code>ŷᵢ=b₀+b₁xᵢ</code></div><div><span>{t('Loss')}</span><code>L(b₀,b₁)=(1/n)Σ[yᵢ−(b₀+b₁xᵢ)]²</code></div></div>
       </section>
+    </section>
+
+
+    <section className="r2-section">
+      <div className="deriv-core-banner r2-banner"><span>{t('Model quality')}</span><strong>R²</strong><p>{t('Why it is naturally bounded on the training sample, but can become negative on unseen data.')}</p></div>
+      <div className="deriv-combo-head"><span className="limit-index">03</span><h2>{t('Why R² behaves differently on train and test')}</h2><p>{t('Start from the same definition: R²=1−RSS/TSS. The whole story comes down to whether we are guaranteed that RSS≤TSS on the sample where we evaluate the model.')}</p></div>
+      <R2Comparison/>
     </section>
   </main>;
 }
