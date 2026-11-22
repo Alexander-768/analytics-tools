@@ -6,10 +6,10 @@ type ClientRow={name:string;salary:number;x:number;y:number};
 type LogStep={step:number;b0:number;b1:number;loss:number;g0:number;g1:number};
 
 const clients:ClientRow[]=[
-  {name:'A',salary:30,x:-1.5,y:0},
-  {name:'B',salary:50,x:-.5,y:1},
-  {name:'C',salary:70,x:.5,y:0},
-  {name:'D',salary:90,x:1.5,y:1},
+  {name:'A',salary:30,x:30,y:0},
+  {name:'B',salary:50,x:50,y:1},
+  {name:'C',salary:70,x:70,y:0},
+  {name:'D',salary:90,x:90,y:1},
 ];
 
 const sigmoid=(z:number)=>1/(1+Math.exp(-z));
@@ -34,7 +34,7 @@ function calcGrad(b0:number,b1:number){
 }
 
 function SigmoidPlot({b0,b1}:{b0:number;b1:number}){
-  const W=760,H=390,P=48,xmin=-2,xmax=2,ymin=0,ymax=1;
+  const W=760,H=390,P=48,xmin=20,xmax=100,ymin=0,ymax=1;
   const sx=(x:number)=>P+(x-xmin)/(xmax-xmin)*(W-P*2);
   const sy=(y:number)=>H-P-(y-ymin)/(ymax-ymin)*(H-P*2);
   const curve=Array.from({length:181},(_,i)=>{
@@ -44,7 +44,7 @@ function SigmoidPlot({b0,b1}:{b0:number;b1:number}){
   const d=curve.map((p,i)=>`${i?'L':'M'} ${sx(p.x).toFixed(1)} ${sy(p.p).toFixed(1)}`).join(' ');
   return <svg className="logreg-sigmoid" viewBox={`0 0 ${W} ${H}`}>
     <rect width={W} height={H} className="gradient-bg"/>
-    {[-2,-1,0,1,2].map(v=><g key={'x'+v}><line x1={sx(v)} y1={sy(0)} x2={sx(v)} y2={sy(1)} className="gradient-grid"/><text x={sx(v)-5} y={H-18}>{v}</text></g>)}
+    {[20,40,60,80,100].map(v=><g key={'x'+v}><line x1={sx(v)} y1={sy(0)} x2={sx(v)} y2={sy(1)} className="gradient-grid"/><text x={sx(v)-5} y={H-18}>{v}</text></g>)}
     {[0,.25,.5,.75,1].map(v=><g key={'y'+v}><line x1={sx(xmin)} y1={sy(v)} x2={sx(xmax)} y2={sy(v)} className={v===.5?'logreg-threshold':'gradient-grid'}/><text x={13} y={sy(v)+3}>{v.toFixed(2)}</text></g>)}
     <path d={d} className="logreg-sigmoid-curve"/>
     {clients.map((r,i)=>{
@@ -62,7 +62,7 @@ function SigmoidPlot({b0,b1}:{b0:number;b1:number}){
 }
 
 function LossContour({trajectory,currentStep}:{trajectory:LogStep[];currentStep:number}){
-  const W=720,H=430,P=48,b0min=-2.5,b0max=2.5,b1min=-1.5,b1max=2.8;
+  const W=720,H=430,P=48,b0min=-5,b0max=1.5,b1min=-.03,b1max=.12;
   const sx=(v:number)=>P+(v-b0min)/(b0max-b0min)*(W-P*2);
   const sy=(v:number)=>H-P-(v-b1min)/(b1max-b1min)*(H-P*2);
   const nx=30,ny=26;
@@ -84,13 +84,13 @@ function LossContour({trajectory,currentStep}:{trajectory:LogStep[];currentStep:
       const cw=(W-P*2)/nx+1,ch=(H-P*2)/ny+1;
       return <rect key={i} x={sx(c.b0)-cw/2} y={sy(c.b1)-ch/2} width={cw} height={ch} className="logreg-heat-cell" style={{opacity:.08+.42*t}}/>
     })}
-    {[ -2,-1,0,1,2].map(v=><g key={'x'+v}><line x1={sx(v)} y1={sy(b1min)} x2={sx(v)} y2={sy(b1max)} className="gradient-grid"/><text x={sx(v)-5} y={H-18}>{v}</text></g>)}
-    {[-1,0,1,2].map(v=><g key={'y'+v}><line x1={sx(b0min)} y1={sy(v)} x2={sx(b0max)} y2={sy(v)} className="gradient-grid"/><text x={14} y={sy(v)+3}>{v}</text></g>)}
+    {[-5,-4,-3,-2,-1,0,1].map(v=><g key={'x'+v}><line x1={sx(v)} y1={sy(b1min)} x2={sx(v)} y2={sy(b1max)} className="gradient-grid"/><text x={sx(v)-5} y={H-18}>{v}</text></g>)}
+    {[-.02,0,.02,.04,.06,.08,.1,.12].map(v=><g key={'y'+v}><line x1={sx(b0min)} y1={sy(v)} x2={sx(b0max)} y2={sy(v)} className="gradient-grid"/><text x={14} y={sy(v)+3}>{v}</text></g>)}
     <polyline points={trajectory.map(p=>`${sx(p.b0)},${sy(p.b1)}`).join(' ')} className="reg-param-path ghost"/>
     <polyline points={active.map(p=>`${sx(p.b0)},${sy(p.b1)}`).join(' ')} className="reg-param-path active"/>
     {trajectory.map((p,i)=><circle key={i} cx={sx(p.b0)} cy={sy(p.b1)} r={i===currentStep?6:2.5} className={i<=currentStep?'gd-step-dot active':'gd-step-dot'}/>)}
-    <circle cx={sx(0)} cy={sy(.908)} r="6" className="reg-ols-point"/>
-    <text x={sx(0)+9} y={sy(.908)-9} className="gd-label">min ≈ (0, 0.91)</text>
+    <circle cx={sx(-2.725)} cy={sy(.0454)} r="6" className="reg-ols-point"/>
+    <text x={sx(-2.725)+9} y={sy(.0454)-9} className="gd-label">min ≈ (-2.72, 0.045)</text>
     {current&&<text x={sx(current.b0)+8} y={sy(current.b1)+15} className="gd-current-label">step {current.step}</text>}
     <text x={W-30} y={H-18}>b₀</text><text x={16} y={22}>b₁</text>
   </svg>;
@@ -101,9 +101,9 @@ function LogLoss3D({trajectory,currentStep}:{trajectory:LogStep[];currentStep:nu
   const [pitch,setPitch]=useState(.58);
   const [zoom,setZoom]=useState(1);
   const drag=useRef<{x:number;y:number}|null>(null);
-  const b0min=-2.5,b0max=2.5,b1min=-1.5,b1max=2.8,zScale=1.8;
+  const b0min=-5,b0max=1.5,b1min=-.03,b1max=.12,zScale=1.8;
   const project=(b0:number,b1:number,z:number)=>{
-    const x=b0*.9,y=(b1-.65)*.9,zs=z*zScale;
+    const x=(b0+1.75)*.75,y=(b1-.045)*30,zs=z*zScale;
     const cy=Math.cos(yaw),sy=Math.sin(yaw),x1=x*cy-y*sy,y1=x*sy+y*cy,cp=Math.cos(pitch),sp=Math.sin(pitch);
     const y2=y1*cp-zs*sp;
     return {x:360+x1*72*zoom,y:235-y2*72*zoom};
@@ -114,10 +114,10 @@ function LogLoss3D({trajectory,currentStep}:{trajectory:LogStep[];currentStep:nu
   const line1=(fixed:number)=>Array.from({length:45},(_,i)=>{const b1=b1min+i*(b1max-b1min)/44;return project(fixed,b1,calcLoss(fixed,b1))});
   const pts=trajectory.map(p=>({...p,screen:project(p.b0,p.b1,p.loss)}));
   const active=pts.slice(0,currentStep+1),current=pts[Math.min(currentStep,pts.length-1)];
-  const min=project(0,.908,calcLoss(0,.908));
+  const min=project(-2.725,.0454,calcLoss(-2.725,.0454));
   const origin=project(0,0,0),xAxis=project(b0max,0,0),xAxisNeg=project(b0min,0,0),yAxis=project(0,b1max,0),yAxisNeg=project(0,b1min,0),zAxis=project(0,0,2.2);
-  const b0Ticks=[-2,-1,0,1,2];
-  const b1Ticks=[-1,0,1,2];
+  const b0Ticks=[-5,-4,-3,-2,-1,0,1];
+  const b1Ticks=[-.02,0,.02,.04,.06,.08,.1,.12];
   const lossTicks=[0,.5,1,1.5,2];
   return <div className="reg-loss3d-wrap">
     <svg className="reg-loss3d" viewBox="0 0 720 470"
@@ -132,7 +132,7 @@ function LogLoss3D({trajectory,currentStep}:{trajectory:LogStep[];currentStep:nu
       <line x1={yAxisNeg.x} y1={yAxisNeg.y} x2={yAxis.x} y2={yAxis.y} className="surface-axis"/>
       <line x1={origin.x} y1={origin.y} x2={zAxis.x} y2={zAxis.y} className="surface-axis"/>
       <text x={xAxis.x+7} y={xAxis.y} className="gd-axis-label">b₀</text><text x={yAxis.x+7} y={yAxis.y} className="gd-axis-label">b₁</text><text x={zAxis.x+7} y={zAxis.y} className="gd-axis-label">log loss</text>
-      {b0Ticks.map(v=>{const p=project(v,0,0);return <g key={'lb0'+v}><circle cx={p.x} cy={p.y} r="2" className="surface-tick"/><text x={p.x+5} y={p.y-5} className="surface-tick-label">{v}</text></g>})}
+      {b0Ticks.map(v=>{const p=project(v,0,0);return <g key={'lb0'+v}><circle cx={p.x} cy={p.y} r="2" className="surface-tick"/><text x={p.x+5} y={p.y-5} className="surface-tick-label">{Math.abs(v)<1?v.toFixed(2):v}</text></g>})}
       {b1Ticks.map(v=>{const p=project(0,v,0);return <g key={'lb1'+v}><circle cx={p.x} cy={p.y} r="2" className="surface-tick"/><text x={p.x+5} y={p.y-5} className="surface-tick-label">{v}</text></g>})}
       {lossTicks.map(v=>{const p=project(0,0,v);return <g key={'lloss'+v}><circle cx={p.x} cy={p.y} r="2" className="surface-tick"/><text x={p.x+5} y={p.y-5} className="surface-tick-label">{v.toFixed(1)}</text></g>})}
       <polyline points={pts.map(p=>`${p.screen.x},${p.screen.y}`).join(' ')} className="reg-3d-path ghost"/><polyline points={active.map(p=>`${p.screen.x},${p.screen.y}`).join(' ')} className="reg-3d-path active"/>
@@ -146,7 +146,7 @@ function LogLoss3D({trajectory,currentStep}:{trajectory:LogStep[];currentStep:nu
 
 export function LogisticRegressionPage(){
   const {t}=useLanguage();
-  const [lr,setLr]=useState(.6);
+  const [lr,setLr]=useState(.001);
   const [steps,setSteps]=useState(50);
   const [step,setStep]=useState(0);
   const [playing,setPlaying]=useState(false);
@@ -197,7 +197,15 @@ export function LogisticRegressionPage(){
     <section className="logreg-data panel">
       <div className="gradient-visual-head"><span>{t('Tiny credit example')}</span><b>{t('4 clients')}</b></div>
       <div className="logreg-client-grid">{clients.map(r=><article key={r.name}><strong>{r.name}</strong><span>{t('Salary')} <b>{r.salary}k</b></span><span>x <b>{r.x.toFixed(1)}</b></span><span>{t('Repaid')} <b>{r.y}</b></span></article>)}</div>
-      <p className="limit-note">{t('We scale salary to x=(salary−60)/20 only to keep the math and axes compact. The outcomes are intentionally not perfectly separable, so the unregularized log-loss has a finite minimum.')}</p>
+      <p className="limit-note">{t('Here x is the salary itself: 30, 50, 70, 90. We do not rescale or center the feature in this example.')}</p>
+    </section>
+
+    <section className="logreg-separation panel">
+      <span className="gradient-step">01.5</span>
+      <h3>{t('Why are the outcomes not perfectly separable?')}</h3>
+      <p>{t('If the data were 30→0, 50→0, 70→1, 90→1, one threshold between 50 and 70 could classify every client perfectly. Logistic regression could then keep making the sigmoid steeper and steeper: probabilities would move closer to 0,0,1,1 and log loss would keep approaching 0.')}</p>
+      <p>{t('In that perfectly separable case, without regularization there is no finite best pair of coefficients: |b₀| and |b₁| can keep growing while the loss keeps improving. So there is no single finite point on the 3D surface where optimization naturally stops.')}</p>
+      <p>{t('For this teaching example we intentionally use 30→0, 50→1, 70→0, 90→1. No single threshold can classify all four clients correctly, so the model has to find a compromise. That gives log loss a real finite minimum, which we can show as one point on the 3D surface.')}</p>
     </section>
 
     <section className="logreg-sigmoid-section">
@@ -223,7 +231,7 @@ export function LogisticRegressionPage(){
     <section className="logreg-train-section">
       <div className="deriv-combo-head"><span className="limit-index">04</span><h2>{t('Now optimize b₀ and b₁')}</h2><p>{t('The dataset is fixed. Gradient descent moves only the model parameters. Every step changes all four probabilities, which changes the total log loss.')}</p></div>
       <div className="gd-controls panel">
-        <label><span>{t('Learning rate')}</span><input type="range" min=".05" max="1.2" step=".05" value={lr} onChange={e=>setLr(+e.target.value)}/><b>{lr.toFixed(2)}</b></label>
+        <label><span>{t('Learning rate')}</span><input type="range" min=".0001" max=".002" step=".0001" value={lr} onChange={e=>setLr(+e.target.value)}/><b>{lr.toFixed(4)}</b></label>
         <label><span>{t('Steps')}</span><input type="range" min="10" max="80" step="1" value={steps} onChange={e=>setSteps(+e.target.value)}/><b>{steps}</b></label>
         <div className="gd-actions"><button onClick={()=>setPlaying(v=>!v)}>{playing?t('Pause'):t('Run visualization')}</button><button onClick={()=>{setPlaying(false);setStep(s=>Math.min(s+1,trajectory.length-1))}}>{t('Step forward')}</button><button onClick={()=>{setPlaying(false);setStep(0)}}>{t('Reset')}</button></div>
       </div>
