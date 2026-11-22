@@ -146,8 +146,9 @@ function LogLoss3D({trajectory,currentStep}:{trajectory:LogStep[];currentStep:nu
 
 export function LogisticRegressionPage(){
   const {t}=useLanguage();
-  const [lr,setLr]=useState(.001);
-  const [steps,setSteps]=useState(50);
+  const [lrB0,setLrB0]=useState(1.0);
+  const [lrB1,setLrB1]=useState(.001);
+  const [steps,setSteps]=useState(300);
   const [step,setStep]=useState(0);
   const [playing,setPlaying]=useState(false);
 
@@ -156,12 +157,12 @@ export function LogisticRegressionPage(){
     for(let i=0;i<=steps;i++){
       const loss=calcLoss(b0,b1),{g0,g1}=calcGrad(b0,b1);
       out.push({step:i,b0,b1,loss,g0,g1});
-      b0-=lr*g0;b1-=lr*g1;
+      b0-=lrB0*g0;b1-=lrB1*g1;
     }
     return out;
-  },[lr,steps]);
+  },[lrB0,lrB1,steps]);
 
-  useEffect(()=>{setStep(0);setPlaying(false)},[lr,steps]);
+  useEffect(()=>{setStep(0);setPlaying(false)},[lrB0,lrB1,steps]);
   useEffect(()=>{if(!playing)return;const timer=window.setInterval(()=>setStep(s=>{if(s>=trajectory.length-1){setPlaying(false);return s}return s+1}),520);return()=>window.clearInterval(timer)},[playing,trajectory.length]);
 
   const current=trajectory[Math.min(step,trajectory.length-1)];
@@ -230,12 +231,17 @@ export function LogisticRegressionPage(){
 
     <section className="logreg-train-section">
       <div className="deriv-combo-head"><span className="limit-index">04</span><h2>{t('Now optimize b₀ and b₁')}</h2><p>{t('The dataset is fixed. Gradient descent moves only the model parameters. Every step changes all four probabilities, which changes the total log loss.')}</p></div>
-      <div className="gd-controls panel">
-        <label><span>{t('Learning rate')}</span><input type="range" min=".0001" max=".002" step=".0001" value={lr} onChange={e=>setLr(+e.target.value)}/><b>{lr.toFixed(4)}</b></label>
-        <label><span>{t('Steps')}</span><input type="range" min="10" max="80" step="1" value={steps} onChange={e=>setSteps(+e.target.value)}/><b>{steps}</b></label>
+      <div className="gd-controls panel logreg-two-lr">
+        <label><span>η₀ · b₀</span><input type="range" min=".05" max="1.2" step=".05" value={lrB0} onChange={e=>setLrB0(+e.target.value)}/><b>{lrB0.toFixed(2)}</b></label>
+        <label><span>η₁ · b₁</span><input type="range" min=".0001" max=".0015" step=".0001" value={lrB1} onChange={e=>setLrB1(+e.target.value)}/><b>{lrB1.toFixed(4)}</b></label>
+        <label><span>{t('Steps')}</span><input type="range" min="50" max="500" step="10" value={steps} onChange={e=>setSteps(+e.target.value)}/><b>{steps}</b></label>
         <div className="gd-actions"><button onClick={()=>setPlaying(v=>!v)}>{playing?t('Pause'):t('Run visualization')}</button><button onClick={()=>{setPlaying(false);setStep(s=>Math.min(s+1,trajectory.length-1))}}>{t('Step forward')}</button><button onClick={()=>{setPlaying(false);setStep(0)}}>{t('Reset')}</button></div>
       </div>
-      <div className="logreg-gradient-formula panel"><code>∂L/∂b₀ = (1/n)Σ(pᵢ−yᵢ)</code><code>∂L/∂b₁ = (1/n)Σ(pᵢ−yᵢ)xᵢ</code><strong>b ← b − η∇L</strong></div>
+      <div className="logreg-gradient-formula panel"><code>∂L/∂b₀ = (1/n)Σ(pᵢ−yᵢ)</code><code>∂L/∂b₁ = (1/n)Σ(pᵢ−yᵢ)xᵢ</code><strong>b₀ ← b₀ − η₀∂L/∂b₀ · b₁ ← b₁ − η₁∂L/∂b₁</strong></div>
+      <div className="logreg-scale-note panel">
+        <b>{t('Why two learning rates here?')}</b>
+        <p>{t('Because we kept salary in raw units, the gradient for b₁ is multiplied by x=30…90 and is numerically much larger than the gradient for b₀. One shared learning rate either makes b₁ unstable or makes b₀ move painfully slowly. Using separate step sizes lets us keep the raw salary feature and still see the optimizer reach the same finite minimum.')}</p>
+      </div>
       <div className="reg-visual-grid">
         <section className="panel reg-visual"><div className="gradient-visual-head"><span>(b₀,b₁)</span><b>{t('Top view of log loss')}</b></div><LossContour trajectory={trajectory} currentStep={step}/></section>
         <section className="panel reg-visual"><div className="gradient-visual-head"><span>L(b₀,b₁)</span><b>{t('3D log-loss surface')}</b></div><LogLoss3D trajectory={trajectory} currentStep={step}/></section>
